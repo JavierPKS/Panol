@@ -63,7 +63,7 @@ public class InventarioService {
   }
 
   public Map<String, Object> obtenerProducto(int id) {
-    Producto p = productoRepo.findById(id).orElseThrow();
+    Producto p = productoRepo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     Map<String, Object> res = new HashMap<>();
     res.put("id", p.getId());
     res.put("cod_interno", p.getCodInterno());
@@ -78,9 +78,9 @@ public class InventarioService {
 
   @Transactional
   public void crearProducto(ProductoRequest req) {
-    CategoriaProd cat = categoriaRepo.findById(req.categoria).orElseThrow();
-    Marca mar = marcaRepo.findById(req.marca).orElseThrow();
-    UbicacionInv ubi = ubicacionRepo.findById(req.ubicacion).orElseThrow();
+    CategoriaProd cat = categoriaRepo.findById(req.categoria).orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+    Marca mar = marcaRepo.findById(req.marca).orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+    UbicacionInv ubi = ubicacionRepo.findById(req.ubicacion).orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
 
     Stock stock = new Stock();
     stock.setStockMinimo(0);
@@ -108,11 +108,11 @@ public class InventarioService {
 
   @Transactional
   public void editarProducto(int id, ProductoEditRequest req) {
-    Producto p = productoRepo.findById(id).orElseThrow();
+    Producto p = productoRepo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-    CategoriaProd cat = categoriaRepo.findById(req.categoria).orElseThrow();
-    Marca mar = marcaRepo.findById(req.marca).orElseThrow();
-    UbicacionInv ubi = ubicacionRepo.findById(req.ubicacion).orElseThrow();
+    CategoriaProd cat = categoriaRepo.findById(req.categoria).orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+    Marca mar = marcaRepo.findById(req.marca).orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+    UbicacionInv ubi = ubicacionRepo.findById(req.ubicacion).orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
 
     p.setNombreProducto(req.nombre_producto);
     p.setEstado(req.estado);
@@ -134,7 +134,7 @@ public class InventarioService {
 
   @Transactional
   public void eliminarProducto(int id) {
-    Producto p = productoRepo.findById(id).orElseThrow();
+    Producto p = productoRepo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     // Ojo: en tu BD hay FK desde DET_PRESTAMO a PRODUCTO :contentReference[oaicite:5]{index=5}
     // si existen préstamos asociados, MySQL impedirá borrar.
     productoRepo.delete(p);
@@ -148,7 +148,7 @@ public class InventarioService {
       m.put("id_ubicacion", u.getId());
       m.put("nombre", u.getNombreSala()+" - Estante "+u.getEstante()+" Nivel "+u.getNivel());
       return m;
-    }).toList();
+    }).collect(java.util.stream.Collectors.toList());
   }
 
   @Transactional
@@ -156,7 +156,10 @@ public class InventarioService {
     CategoriaProd c = new CategoriaProd();
     c.setNombre(nombre);
     c = categoriaRepo.save(c);
-    return Map.of("id", c.getId(), "nombre", c.getNombre());
+    Map<String,Object> result = new HashMap<>();
+    result.put("id", c.getId());
+    result.put("nombre", c.getNombre());
+    return result;
   }
 
   @Transactional
@@ -164,7 +167,10 @@ public class InventarioService {
     Marca m = new Marca();
     m.setNombre(nombre);
     m = marcaRepo.save(m);
-    return Map.of("id", m.getId(), "nombre", m.getNombre());
+    Map<String,Object> result = new HashMap<>();
+    result.put("id", m.getId());
+    result.put("nombre", m.getNombre());
+    return result;
   }
 
   @Transactional
@@ -176,6 +182,9 @@ public class InventarioService {
     u.setDescripcion(descripcion);
     u = ubicacionRepo.save(u);
     String nombre = sala + " - Estante " + estante + " Nivel " + nivel;
-    return Map.of("id", u.getId(), "nombre", nombre);
+    Map<String,Object> result = new HashMap<>();
+    result.put("id", u.getId());
+    result.put("nombre", nombre);
+    return result;
   }
 }

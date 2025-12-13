@@ -32,7 +32,7 @@ public class PrestamosService {
 
   @Transactional
   public void prestar(PrestarRequest req) {
-    Producto producto = productoRepo.findById(req.id_producto).orElseThrow();
+    Producto producto = productoRepo.findById(req.id_producto).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     Stock stock = producto.getInventario().getStock();
 
     if (stock.getCantidad() < req.cantidad) {
@@ -55,11 +55,11 @@ public class PrestamosService {
 
   @Transactional
   public void devolver(DevolverRequest req) {
-    DetPrestamo det = detRepo.findById(req.id_detalle).orElseThrow();
+    DetPrestamo det = detRepo.findById(req.id_detalle).orElseThrow(() -> new RuntimeException("Detalle de préstamo no encontrado"));
     det.setFechaDevolucionPrestamo(LocalDate.now());
     detRepo.save(det);
 
-    Producto producto = productoRepo.findById(req.id_producto).orElseThrow();
+    Producto producto = productoRepo.findById(req.id_producto).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     Stock stock = producto.getInventario().getStock();
     stock.setCantidad(stock.getCantidad() + req.cantidad);
     stockRepo.save(stock);

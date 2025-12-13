@@ -36,20 +36,27 @@ public class SolicitudesController {
     s.setPrioridad(prioridad);
 
     s = repo.save(s);
-    return Map.of("message","Solicitud creada", "id", s.getId());
+    Map<String,Object> result = new HashMap<>();
+    result.put("message", "Solicitud creada");
+    result.put("id", s.getId());
+    return result;
   }
 
   @PutMapping("/{id}")
   public Map<String,String> cambiarEstado(@PathVariable int id, @RequestBody Map<String,String> body) {
-    SoliPrestamo s = repo.findById(id).orElseThrow();
+    SoliPrestamo s = repo.findById(id).orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
     s.setEstado(body.get("estado"));
     repo.save(s);
-    return Map.of("message","Estado actualizado");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Estado actualizado");
+    return result;
   }
 
   @DeleteMapping("/{id}")
   public Map<String,String> eliminar(@PathVariable int id) {
     repo.deleteById(id);
-    return Map.of("message","Solicitud eliminada");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Solicitud eliminada");
+    return result;
   }
 }

@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -33,7 +34,7 @@ public class UsuariosController {
     String email = body.get("email").toString();
     String rolId = body.get("rol").toString();
 
-    Rol rol = rolRepo.findById(rolId).orElseThrow();
+    Rol rol = rolRepo.findById(rolId).orElseThrow(() -> new RuntimeException("Rol no encontrado"));
 
     Usuario u = new Usuario();
     u.setRut(rut);
@@ -45,21 +46,27 @@ public class UsuariosController {
     u.setRol(rol);
 
     usuarioRepo.save(u);
-    return Map.of("message","Usuario creado");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Usuario creado");
+    return result;
   }
 
   @PutMapping("/{rut}")
   public Map<String,String> editar(@PathVariable int rut, @RequestBody Map<String,Object> body) {
-    Usuario u = usuarioRepo.findById(rut).orElseThrow();
+    Usuario u = usuarioRepo.findById(rut).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     if (body.containsKey("email")) u.setEmail(body.get("email").toString());
     if (body.containsKey("actividad")) u.setActividad(body.get("actividad").toString());
     usuarioRepo.save(u);
-    return Map.of("message","Usuario actualizado");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Usuario actualizado");
+    return result;
   }
 
   @DeleteMapping("/{rut}")
   public Map<String,String> eliminar(@PathVariable int rut) {
     usuarioRepo.deleteById(rut);
-    return Map.of("message","Usuario eliminado");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Usuario eliminado");
+    return result;
   }
 }

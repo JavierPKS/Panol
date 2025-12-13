@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/prestamos")
@@ -26,12 +27,16 @@ public class PrestamosController {
   @PostMapping
   public Map<String,String> prestar(@Valid @RequestBody PrestarRequest req) {
     service.prestar(req);
-    return Map.of("message", "Préstamo registrado");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Préstamo registrado");
+    return result;
   }
 
   @PostMapping("/devolver")
   public Map<String,String> devolver(@Valid @RequestBody DevolverRequest req) {
     service.devolver(req);
-    return Map.of("message", "Devolución registrada");
+    Map<String,String> result = new HashMap<>();
+    result.put("message", "Devolución registrada");
+    return result;
   }
 }
