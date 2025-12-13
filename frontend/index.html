@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Gestión de Pañol - Duoc UC</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<!-- MODAL — Crear Producto -->
+<div id="modal-crear-producto" class="modal hidden">
+  <div class="modal-content modal-wide">
+      <h3>Nuevo Producto</h3>
+
+      <label for="prod-codigo">Código interno:</label>
+      <input id="prod-codigo" type="text">
+
+      <label for="prod-nombre">Nombre producto:</label>
+      <input id="prod-nombre" type="text">
+
+      <!-- CATEGORÍA -->
+      <label for="prod-cat">Categoría:</label>
+      <div class="input-row">
+        <select id="prod-cat"></select>
+        <button class="btn-mini" onclick="abrirModal('modal-add-cat')">+</button>
+      </div>
+
+      <!-- MARCA -->
+      <label for="prod-marca">Marca:</label>
+      <div class="input-row">
+        <select id="prod-marca"></select>
+        <button class="btn-mini" onclick="abrirModal('modal-add-marca')">+</button>
+      </div>
+
+      <!-- STOCK -->
+      <label for="prod-stock">Stock inicial:</label>
+      <input id="prod-stock" type="number" value="0" min="0">
+
+      <!-- UBICACIÓN -->
+      <label for="prod-ubi">Ubicación:</label>
+      <div class="input-row">
+        <select id="prod-ubi"></select>
+        <button class="btn-mini" onclick="abrirModal('modal-add-ubi')">+</button>
+      </div>
+
+      <div class="modal-actions">
+          <button class="btn-primary" onclick="guardarProducto()">Guardar</button>
+          <button onclick="cerrarModal('modal-crear-producto')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+
+<!-- MODAL — Editar Producto -->
+<div id="modal-editar-producto" class="modal hidden">
+  <div class="modal-content modal-wide">
+      <h3>Editar Producto</h3>
+
+      <input type="hidden" id="edit-id">
+
+      <label>Código interno:</label>
+      <input id="edit-codigo" type="text" disabled>
+
+      <label>Nombre producto:</label>
+      <input id="edit-nombre" type="text">
+
+      <label>Categoría:</label>
+      <select id="edit-cat"></select>
+
+      <label>Marca:</label>
+      <select id="edit-marca"></select>
+
+      <label>Ubicación:</label>
+      <select id="edit-ubi"></select>
+
+      <label>Stock actual:</label>
+      <input id="edit-stock" type="number" min="0">
+
+      <label>Estado:</label>
+      <input id="edit-estado" type="text">
+
+      <div class="modal-actions">
+          <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
+          <button onclick="cerrarModal('modal-editar-producto')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+
+
+<!-- MODAL — Eliminar Producto -->
+<div id="modal-eliminar-producto" class="modal hidden">
+  <div class="modal-content">
+      <h3 style="color:red;">⚠ Confirmar eliminación</h3>
+      <p>¿Está seguro que desea eliminar este producto?</p>
+      <p><strong>Esta acción no se puede deshacer.</strong></p>
+
+      <input type="hidden" id="delete-id">
+
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="confirmarEliminarProducto()">Eliminar</button>
+        <button class="btn-primary" onclick="cerrarModal('modal-eliminar-producto')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+
+<!-- MODAL — Nueva Categoría -->
+<div id="modal-add-cat" class="modal hidden">
+  <div class="modal-content">
+      <h3>Nueva Categoría</h3>
+      <input id="new-cat-name" type="text" placeholder="Nombre categoría">
+      <div class="modal-actions">
+          <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
+          <button onclick="cerrarModal('modal-add-cat')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+<!-- MODAL — Nueva Marca -->
+<div id="modal-add-marca" class="modal hidden">
+  <div class="modal-content">
+      <h3>Nueva Marca</h3>
+      <input id="new-marca-name" type="text" placeholder="Nombre marca">
+      <div class="modal-actions">
+          <button class="btn-primary" onclick="guardarMarca()">Guardar</button>
+          <button onclick="cerrarModal('modal-add-marca')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+<!-- MODAL — Nueva Ubicación -->
+<div id="modal-add-ubi" class="modal hidden">
+  <div class="modal-content">
+      <h3>Nueva Ubicación</h3>
+      <input id="new-ubi-sala" type="text" placeholder="Sala">
+      <input id="new-ubi-estante" type="text" placeholder="Estante">
+      <input id="new-ubi-nivel" type="number" placeholder="Nivel">
+      <input id="new-ubi-desc" type="text" placeholder="Descripción (opcional)">
+      <div class="modal-actions">
+          <button class="btn-primary" onclick="guardarUbicacion()">Guardar</button>
+          <button onclick="cerrarModal('modal-add-ubi')">Cancelar</button>
+      </div>
+  </div>
+</div>
+
+
+<body>
+
+    <!-- HEADER INSTITUCIONAL -->
+    <header class="header">
+        <div class="header-left">
+            <img src="assets/img/logo-duoc.png" alt="Duoc UC" class="logo">
+            <div>
+                <h1>Sistema de Gestión de Pañol</h1>
+                <p>Escuela de Informática y Telecomunicaciones</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <ul>
+            <li class="active" data-vista="inicio">Inicio</li>
+            <li data-vista="inventario">Inventario</li>
+            <li data-vista="solicitudes">Solicitudes</li>
+            <li data-vista="prestamos">Préstamos y Devoluciones</li>
+            <li data-vista="historial">Historial</li>
+            <li data-vista="usuarios">Usuarios</li>
+        </ul>
+    </nav>
+
+    <!-- CONTENIDO -->
+    <main>
+
+        <!-- INICIO -->
+        <section id="inicio" class="vista visible">
+            <h2>Dashboard</h2>
+
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    Recursos Totales: <span id="kpi-total">-</span>
+                </div>
+                <div class="kpi-card">
+                    Disponibles: <span id="kpi-disponibles">-</span>
+                </div>
+                <div class="kpi-card">
+                    Prestados: <span id="kpi-prestados">-</span>
+                </div>
+            </div>
+
+            <h3>Últimos préstamos</h3>
+            <p>(Aquí más adelante cargarás una tabla real desde la API de préstamos)</p>
+        </section>
+
+        <!-- INVENTARIO -->
+        <section id="inventario" class="vista">
+            <div class="vista-header">
+                <h2>Inventario</h2>
+                <button class="btn-primary" id="btn-nuevo">Nuevo recurso</button>
+            </div>
+
+            <table class="tabla" id="tabla-inventario">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Código</th>
+                        <th>Categoría</th>
+                        <th>Stock Total</th>
+                        <th>Disponible</th>
+                        <th>Prestado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Se rellena con fetch desde app.js -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SOLICITUDES -->
+        <section id="solicitudes" class="vista">
+            <h2>Solicitudes</h2>
+            <p>(Luego se conectará a /api/solicitudes)</p>
+        </section>
+
+        <!-- PRÉSTAMOS Y DEVOLUCIONES -->
+        <section id="prestamos" class="vista">
+            <div class="vista-header">
+                <h2>Préstamos y Devoluciones</h2>
+                <button class="btn-primary" onclick="abrirModal('modal-nuevo-prestamo')">Registrar préstamo</button>
+            </div>
+
+            <table class="tabla" id="tabla-prestamos">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Fecha Préstamo</th>
+                        <th>Fecha Devolución</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Llenado automático -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- HISTORIAL -->
+        <section id="historial" class="vista">
+            <h2>Historial</h2>
+            <p>(Luego se conectará a /api/historial)</p>
+        </section>
+
+        <!-- USUARIOS -->
+        <section id="usuarios" class="vista">
+            <h2>Gestión de Usuarios</h2>
+            <p>(Luego se conectará a /api/usuarios)</p>
+        </section>
+
+    </main>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
