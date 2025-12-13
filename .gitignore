@@ -1,2 +1,8 @@
 # Dependencias
 node_modules/
+
+# Archivos de compilación de Maven/Spring Boot
+target/
+
+# Archivos de IDE (IntelliJ, VSCode)
+.vscode/
