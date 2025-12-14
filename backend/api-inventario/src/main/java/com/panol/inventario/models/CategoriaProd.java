@@ -1,9 +1,19 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "CATEGORIA_PROD")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CategoriaProd {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,9 +22,4 @@ public class CategoriaProd {
 
   @Column(name = "nombre", nullable = false)
   private String nombre;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public String getNombre() { return nombre; }
-  public void setNombre(String nombre) { this.nombre = nombre; }
 }

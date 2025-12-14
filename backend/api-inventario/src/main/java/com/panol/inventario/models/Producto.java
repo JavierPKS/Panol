@@ -1,9 +1,19 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "PRODUCTO")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Producto {
 
   @Id
@@ -31,19 +41,4 @@ public class Producto {
   @ManyToOne(optional = false)
   @JoinColumn(name = "MARCA_id_marca", nullable = false)
   private Marca marca;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public Long getCodInterno() { return codInterno; }
-  public void setCodInterno(Long codInterno) { this.codInterno = codInterno; }
-  public String getEstado() { return estado; }
-  public void setEstado(String estado) { this.estado = estado; }
-  public String getNombreProducto() { return nombreProducto; }
-  public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
-  public Inventario getInventario() { return inventario; }
-  public void setInventario(Inventario inventario) { this.inventario = inventario; }
-  public CategoriaProd getCategoria() { return categoria; }
-  public void setCategoria(CategoriaProd categoria) { this.categoria = categoria; }
-  public Marca getMarca() { return marca; }
-  public void setMarca(Marca marca) { this.marca = marca; }
 }

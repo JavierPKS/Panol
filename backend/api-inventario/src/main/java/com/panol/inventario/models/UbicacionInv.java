@@ -1,9 +1,19 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "UBICACION_INV")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UbicacionInv {
 
   @Id
@@ -22,15 +32,4 @@ public class UbicacionInv {
 
   @Column(name = "descripcion")
   private String descripcion;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public String getNombreSala() { return nombreSala; }
-  public void setNombreSala(String nombreSala) { this.nombreSala = nombreSala; }
-  public String getEstante() { return estante; }
-  public void setEstante(String estante) { this.estante = estante; }
-  public Integer getNivel() { return nivel; }
-  public void setNivel(Integer nivel) { this.nivel = nivel; }
-  public String getDescripcion() { return descripcion; }
-  public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 }

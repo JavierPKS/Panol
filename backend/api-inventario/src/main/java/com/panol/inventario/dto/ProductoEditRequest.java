@@ -1,12 +1,18 @@
 package com.panol.inventario.dto;
 
-import jakarta.annotation.sql.DataSourceDefinition;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Data
-@equalsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false)
 public class ProductoEditRequest {
-  private String nombre_producto;
+  private String nombreProducto;
   private Integer categoria;
   private Integer marca;
   private Integer ubicacion;

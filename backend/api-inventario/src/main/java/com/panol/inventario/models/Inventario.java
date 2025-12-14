@@ -1,13 +1,23 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "INVENTARIO")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Inventario {
 
-  @Id
+  @Id 
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id_inventario")
   private Integer id;
@@ -25,15 +35,4 @@ public class Inventario {
   @ManyToOne(optional = false)
   @JoinColumn(name = "STOCK_id_stock", nullable = false)
   private Stock stock;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public String getObservacion() { return observacion; }
-  public void setObservacion(String observacion) { this.observacion = observacion; }
-  public LocalDate getFechaActualizacion() { return fechaActualizacion; }
-  public void setFechaActualizacion(LocalDate fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
-  public UbicacionInv getUbicacion() { return ubicacion; }
-  public void setUbicacion(UbicacionInv ubicacion) { this.ubicacion = ubicacion; }
-  public Stock getStock() { return stock; }
-  public void setStock(Stock stock) { this.stock = stock; }
 }

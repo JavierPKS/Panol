@@ -1,9 +1,19 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "STOCK")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Stock {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,13 +28,4 @@ public class Stock {
 
   @Column(name = "cantidad", nullable = false)
   private Integer cantidad;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public Integer getStockMinimo() { return stockMinimo; }
-  public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
-  public Integer getStockMaximo() { return stockMaximo; }
-  public void setStockMaximo(Integer stockMaximo) { this.stockMaximo = stockMaximo; }
-  public Integer getCantidad() { return cantidad; }
-  public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
 }

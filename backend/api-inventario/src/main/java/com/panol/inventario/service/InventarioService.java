@@ -3,7 +3,6 @@ package com.panol.inventario.service;
 import com.panol.inventario.dto.*;
 import com.panol.inventario.models.*;
 import com.panol.inventario.repository.*;
-import com.panol.prestamos.repository.DetPrestamoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ public class InventarioService {
   private final UbicacionInvRepository ubicacionRepo;
   private final StockRepository stockRepo;
   private final InventarioRepository inventarioRepo;
-  private final DetPrestamoRepository detPrestamoRepo;
 
   public InventarioService(
       ProductoRepository productoRepo,
@@ -27,8 +25,7 @@ public class InventarioService {
       MarcaRepository marcaRepo,
       UbicacionInvRepository ubicacionRepo,
       StockRepository stockRepo,
-      InventarioRepository inventarioRepo,
-      DetPrestamoRepository detPrestamoRepo
+      InventarioRepository inventarioRepo
   ) {
     this.productoRepo = productoRepo;
     this.categoriaRepo = categoriaRepo;
@@ -36,7 +33,6 @@ public class InventarioService {
     this.ubicacionRepo = ubicacionRepo;
     this.stockRepo = stockRepo;
     this.inventarioRepo = inventarioRepo;
-    this.detPrestamoRepo = detPrestamoRepo;
   }
 
   public List<ProductoResponse> listarInventario() {
@@ -45,8 +41,7 @@ public class InventarioService {
 
     for (Producto p : productos) {
       int disponible = p.getInventario().getStock().getCantidad();
-      int prestado = detPrestamoRepo.sumCantidadByProductoId(p.getId());
-      int total = disponible + prestado;
+      int total = disponible;
 
       ProductoResponse r = new ProductoResponse();
       r.id = p.getId();
@@ -54,7 +49,7 @@ public class InventarioService {
       r.codigo = p.getCodInterno();
       r.categoria = p.getCategoria().getNombre();
       r.stock_disponible = disponible;
-      r.stock_prestado = prestado;
+      r.stock_prestado = 0;
       r.stock_total = total;
       r.estado = p.getEstado();
       out.add(r);
@@ -110,12 +105,12 @@ public class InventarioService {
   public void editarProducto(int id, ProductoEditRequest req) {
     Producto p = productoRepo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-    CategoriaProd cat = categoriaRepo.findById(req.categoria).orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-    Marca mar = marcaRepo.findById(req.marca).orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-    UbicacionInv ubi = ubicacionRepo.findById(req.ubicacion).orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
+    CategoriaProd cat = categoriaRepo.findById(req.getCategoria()).orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+    Marca mar = marcaRepo.findById(req.getMarca()).orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+    UbicacionInv ubi = ubicacionRepo.findById(req.getUbicacion()).orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
 
-    p.setNombreProducto(req.nombre_producto);
-    p.setEstado(req.estado);
+    p.setNombreProducto(req.getNombreProducto());
+    p.setEstado(req.getEstado());
     p.setCategoria(cat);
     p.setMarca(mar);
 
@@ -124,7 +119,7 @@ public class InventarioService {
     inv.setFechaActualizacion(LocalDate.now());
 
     Stock stock = inv.getStock();
-    stock.setCantidad(req.stock);
+    stock.setCantidad(req.getStock());
 
     // save (por cascada no estamos usando, así que guardamos explícito)
     stockRepo.save(stock);
