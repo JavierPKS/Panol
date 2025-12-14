@@ -1,18 +1,20 @@
 package com.panol.inventario.dto;
 
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
-public class ProductoEditRequest {
-  private String nombreProducto;
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@equalsAndHashCode(callSuper = false)
+
+public class ProductoEditRequestDTO extends RepresentationModel<ProductoEditRequestDTO> {
+  private String nombre_producto;
   private Integer categoria;
   private Integer marca;
   private Integer ubicacion;
