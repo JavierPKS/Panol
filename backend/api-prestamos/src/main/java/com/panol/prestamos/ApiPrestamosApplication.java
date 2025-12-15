@@ -4,8 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PanolApplication {
-  public static void main(String[] args) {
-    SpringApplication.run(PanolApplication.class, args);
-  }
+public class ApiPrestamosApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ApiPrestamosApplication.class, args);
+	}
+
 }

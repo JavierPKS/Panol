@@ -3,6 +3,7 @@ package com.panol.prestamos.controller;
 import com.panol.prestamos.dto.*;
 import com.panol.prestamos.service.PrestamosService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,23 +21,23 @@ public class PrestamosController {
   }
 
   @GetMapping
-  public List<PrestamoRow> listar() {
-    return service.listar();
+  public ResponseEntity<List<PrestamoResponseDTO>> listar() {
+    return ResponseEntity.ok(service.listarPrestamos());
   }
 
   @PostMapping
-  public Map<String,String> prestar(@Valid @RequestBody PrestarRequest req) {
+  public ResponseEntity<Map<String,String>> prestar(@Valid @RequestBody PrestarRequestDTO req) {
     service.prestar(req);
     Map<String,String> result = new HashMap<>();
-    result.put("message", "Préstamo registrado");
-    return result;
+    result.put("message", "Préstamo registrado correctamente");
+    return ResponseEntity.ok(result);
   }
 
   @PostMapping("/devolver")
-  public Map<String,String> devolver(@Valid @RequestBody DevolverRequest req) {
+  public ResponseEntity<Map<String,String>> devolver(@Valid @RequestBody DevolverRequestDTO req) {
     service.devolver(req);
     Map<String,String> result = new HashMap<>();
-    result.put("message", "Devolución registrada");
-    return result;
+    result.put("message", "Devolución registrada correctamente");
+    return ResponseEntity.ok(result);
   }
 }

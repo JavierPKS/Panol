@@ -1,10 +1,15 @@
 package com.panol.prestamos.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "DET_PRESTAMO")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class DetPrestamo {
 
   @Id
@@ -25,23 +30,9 @@ public class DetPrestamo {
   private LocalDate fechaDevolucionPrestamo;
 
   @Column(name = "SOLI_PRESTAMO_id_prestamo", nullable = false)
-  private Integer idPrestamo;
+  private Integer idPrestamo; // Mantenemos el ID de solicitud por simplicidad
 
-  @Column(name = "PRODUCTO_id_principal", nullable = false)
-  private Integer idProducto;
-
-  public Integer getIdDetalle() { return idDetalle; }
-  public void setIdDetalle(Integer idDetalle) { this.idDetalle = idDetalle; }
-  public Integer getCantidad() { return cantidad; }
-  public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-  public LocalDate getFechaInicioPrestamo() { return fechaInicioPrestamo; }
-  public void setFechaInicioPrestamo(LocalDate fechaInicioPrestamo) { this.fechaInicioPrestamo = fechaInicioPrestamo; }
-  public LocalDate getFechaRetornoPrestamo() { return fechaRetornoPrestamo; }
-  public void setFechaRetornoPrestamo(LocalDate fechaRetornoPrestamo) { this.fechaRetornoPrestamo = fechaRetornoPrestamo; }
-  public LocalDate getFechaDevolucionPrestamo() { return fechaDevolucionPrestamo; }
-  public void setFechaDevolucionPrestamo(LocalDate fechaDevolucionPrestamo) { this.fechaDevolucionPrestamo = fechaDevolucionPrestamo; }
-  public Integer getIdPrestamo() { return idPrestamo; }
-  public void setIdPrestamo(Integer idPrestamo) { this.idPrestamo = idPrestamo; }
-  public Integer getIdProducto() { return idProducto; }
-  public void setIdProducto(Integer idProducto) { this.idProducto = idProducto; }
+  @ManyToOne
+  @JoinColumn(name = "PRODUCTO_id_principal", nullable = false)
+  private Producto producto;
 }
