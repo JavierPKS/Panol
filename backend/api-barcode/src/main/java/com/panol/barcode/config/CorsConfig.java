@@ -1,4 +1,4 @@
-package com.panol.config;
+package com.panol.barcode.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,8 +13,8 @@ public class CorsConfig {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-            .allowedOrigins("*")
-            .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+            .allowedOrigins("*") // En producción, cambia esto por la URL de tu frontend
+            .allowedMethods("GET", "POST", "OPTIONS")
             .allowedHeaders("*");
       }
     };
