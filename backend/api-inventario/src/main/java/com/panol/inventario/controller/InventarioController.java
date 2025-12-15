@@ -2,7 +2,7 @@ package com.panol.inventario.controller;
 
 import com.panol.inventario.dto.*;
 import com.panol.inventario.models.*;
-import com.panol.inventario.service.InventarioService;
+import com.panol.inventario.service.InventarioService; 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +19,7 @@ public class InventarioController {
   }
 
   @GetMapping
-  public List<ProductoResponse> listar() {
+  public List<ProductoResponseDTO> listar() {
     return service.listarInventario();
   }
 
@@ -29,7 +29,7 @@ public class InventarioController {
   }
 
   @PostMapping
-  public Map<String,String> crear(@Valid @RequestBody ProductoRequest req) {
+  public Map<String,String> crear(@Valid @RequestBody ProductoRequestDTO req) {
     service.crearProducto(req);
     Map<String,String> result = new HashMap<>();
     result.put("message", "Producto creado correctamente");
@@ -37,7 +37,7 @@ public class InventarioController {
   }
 
   @PutMapping("/{id}")
-  public Map<String,String> editar(@PathVariable int id, @Valid @RequestBody ProductoEditRequest req) {
+  public Map<String,String> editar(@PathVariable int id, @Valid @RequestBody ProductoEditRequestDTO req) {
     service.editarProducto(id, req);
     Map<String,String> result = new HashMap<>();
     result.put("message", "Producto actualizado");
