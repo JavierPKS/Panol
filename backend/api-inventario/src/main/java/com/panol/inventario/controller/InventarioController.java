@@ -86,4 +86,3 @@ public class InventarioController {
     return service.crearUbicacion(sala, estante, nivel, desc);
   }
 }
-

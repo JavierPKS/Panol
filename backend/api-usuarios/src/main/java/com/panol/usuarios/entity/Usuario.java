@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "USUARIO")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Usuario {
 
   @Id
@@ -34,23 +39,4 @@ public class Usuario {
   @ManyToOne(optional = false)
   @JoinColumn(name = "ROL_id_rol", nullable = false)
   private Rol rol;
-
-  public Integer getRut() { return rut; }
-  public void setRut(Integer rut) { this.rut = rut; }
-  public String getDvRut() { return dvRut; }
-  public void setDvRut(String dvRut) { this.dvRut = dvRut; }
-  public String getPnombre() { return pnombre; }
-  public void setPnombre(String pnombre) { this.pnombre = pnombre; }
-  public String getSnombre() { return snombre; }
-  public void setSnombre(String snombre) { this.snombre = snombre; }
-  public String getApPaterno() { return apPaterno; }
-  public void setApPaterno(String apPaterno) { this.apPaterno = apPaterno; }
-  public String getApMaterno() { return apMaterno; }
-  public void setApMaterno(String apMaterno) { this.apMaterno = apMaterno; }
-  public String getActividad() { return actividad; }
-  public void setActividad(String actividad) { this.actividad = actividad; }
-  public String getEmail() { return email; }
-  public void setEmail(String email) { this.email = email; }
-  public Rol getRol() { return rol; }
-  public void setRol(Rol rol) { this.rol = rol; }
 }

@@ -5,6 +5,11 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "SOLI_PRESTAMO")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SoliPrestamo {
 
   @Id
@@ -26,17 +31,4 @@ public class SoliPrestamo {
 
   @Column(name = "prioridad", nullable = false)
   private String prioridad;
-
-  public Integer getId() { return id; }
-  public void setId(Integer id) { this.id = id; }
-  public String getEstado() { return estado; }
-  public void setEstado(String estado) { this.estado = estado; }
-  public Integer getRut() { return rut; }
-  public void setRut(Integer rut) { this.rut = rut; }
-  public LocalDate getFecha() { return fecha; }
-  public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-  public String getMotivo() { return motivo; }
-  public void setMotivo(String motivo) { this.motivo = motivo; }
-  public String getPrioridad() { return prioridad; }
-  public void setPrioridad(String prioridad) { this.prioridad = prioridad; }
 }

@@ -5,6 +5,11 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "DET_PRESTAMO")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Historial {
 
   @Id
@@ -29,19 +34,4 @@ public class Historial {
 
   @Column(name = "PRODUCTO_id_principal", nullable = false)
   private Integer idProducto;
-
-  public Integer getIdDetalle() { return idDetalle; }
-  public void setIdDetalle(Integer idDetalle) { this.idDetalle = idDetalle; }
-  public Integer getCantidad() { return cantidad; }
-  public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-  public LocalDate getFechaInicioPrestamo() { return fechaInicioPrestamo; }
-  public void setFechaInicioPrestamo(LocalDate fechaInicioPrestamo) { this.fechaInicioPrestamo = fechaInicioPrestamo; }
-  public LocalDate getFechaRetornoPrestamo() { return fechaRetornoPrestamo; }
-  public void setFechaRetornoPrestamo(LocalDate fechaRetornoPrestamo) { this.fechaRetornoPrestamo = fechaRetornoPrestamo; }
-  public LocalDate getFechaDevolucionPrestamo() { return fechaDevolucionPrestamo; }
-  public void setFechaDevolucionPrestamo(LocalDate fechaDevolucionPrestamo) { this.fechaDevolucionPrestamo = fechaDevolucionPrestamo; }
-  public Integer getIdPrestamo() { return idPrestamo; }
-  public void setIdPrestamo(Integer idPrestamo) { this.idPrestamo = idPrestamo; }
-  public Integer getIdProducto() { return idProducto; }
-  public void setIdProducto(Integer idProducto) { this.idProducto = idProducto; }
 }
