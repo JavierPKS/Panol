@@ -1,4 +1,4 @@
-package com.panol.config;
+package com.panol.usuarios.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

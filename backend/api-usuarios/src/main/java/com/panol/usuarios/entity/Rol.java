@@ -1,19 +1,19 @@
 package com.panol.usuarios.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "ROL")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Rol {
-  @Id
-  @Column(name = "id_rol")
-  private String id;
+    @Id
+    @Column(name = "id_rol", length = 1)
+    private String id;
 
-  @Column(name = "nombre_rol", nullable = false)
-  private String nombre;
+    @Column(name = "nombre_rol", nullable = false, length = 25)
+    private String nombre;
 }

@@ -1,72 +1,48 @@
 package com.panol.usuarios.controller;
 
-import com.panol.usuarios.entity.*;
-import com.panol.usuarios.repository.*;
+import com.panol.usuarios.dto.UsuarioDTO;
+import com.panol.usuarios.service.UsuarioService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.List;
-import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
+// Configuración CORS básica para desarrollo
+@CrossOrigin(origins = "*") 
 public class UsuariosController {
 
-  private final UsuarioRepository usuarioRepo;
-  private final RolRepository rolRepo;
+    private final UsuarioService usuarioService;
 
-  public UsuariosController(UsuarioRepository usuarioRepo, RolRepository rolRepo) {
-    this.usuarioRepo = usuarioRepo;
-    this.rolRepo = rolRepo;
-  }
+    public UsuariosController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
 
-  @GetMapping
-  public List<Usuario> listar() {
-    return usuarioRepo.findAll();
-  }
+    @GetMapping
+    public ResponseEntity<List<UsuarioDTO>> listar() {
+        return ResponseEntity.ok(usuarioService.listarUsuarios());
+    }
 
-  @PostMapping
-  public Map<String,String> crear(@RequestBody Map<String,Object> body) {
-    Integer rut = Integer.valueOf(body.get("rut").toString());
-    String dv = body.get("dv_rut").toString();
-    String pnombre = body.get("pnombre").toString();
-    String apPaterno = body.get("ap_paterno").toString();
-    String email = body.get("email").toString();
-    String rolId = body.get("rol").toString();
+    @GetMapping("/{rut}")
+    public ResponseEntity<UsuarioDTO> obtenerPorId(@PathVariable int rut) {
+        return ResponseEntity.ok(usuarioService.buscarPorRut(rut));
+    }
 
-    Rol rol = rolRepo.findById(rolId).orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+    @PostMapping
+    public ResponseEntity<UsuarioDTO> crear(@RequestBody UsuarioDTO dto) {
+        return ResponseEntity.ok(usuarioService.crearUsuario(dto));
+    }
 
-    Usuario u = new Usuario();
-    u.setRut(rut);
-    u.setDvRut(dv);
-    u.setPnombre(pnombre);
-    u.setApPaterno(apPaterno);
-    u.setEmail(email);
-    u.setActividad("1");
-    u.setRol(rol);
+    @PutMapping("/{rut}")
+    public ResponseEntity<UsuarioDTO> editar(@PathVariable int rut, @RequestBody UsuarioDTO dto) {
+        return ResponseEntity.ok(usuarioService.editarUsuario(rut, dto));
+    }
 
-    usuarioRepo.save(u);
-    Map<String,String> result = new HashMap<>();
-    result.put("message", "Usuario creado");
-    return result;
-  }
-
-  @PutMapping("/{rut}")
-  public Map<String,String> editar(@PathVariable int rut, @RequestBody Map<String,Object> body) {
-    Usuario u = usuarioRepo.findById(rut).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    if (body.containsKey("email")) u.setEmail(body.get("email").toString());
-    if (body.containsKey("actividad")) u.setActividad(body.get("actividad").toString());
-    usuarioRepo.save(u);
-    Map<String,String> result = new HashMap<>();
-    result.put("message", "Usuario actualizado");
-    return result;
-  }
-
-  @DeleteMapping("/{rut}")
-  public Map<String,String> eliminar(@PathVariable int rut) {
-    usuarioRepo.deleteById(rut);
-    Map<String,String> result = new HashMap<>();
-    result.put("message", "Usuario eliminado");
-    return result;
-  }
+    @DeleteMapping("/{rut}")
+    public ResponseEntity<Map<String, String>> eliminar(@PathVariable int rut) {
+        usuarioService.eliminarUsuario(rut);
+        return ResponseEntity.ok(Map.of("message", "Usuario eliminado correctamente"));
+    }
 }
