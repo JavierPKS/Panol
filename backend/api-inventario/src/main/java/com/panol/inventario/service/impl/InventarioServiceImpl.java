@@ -151,10 +151,11 @@ public class InventarioServiceImpl implements InventarioService {
   @Override
   @Transactional
   public void eliminarProducto(int id) {
-    Producto p = productoRepo.findById(id)
-        .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-    productoRepo.delete(p);
-  }
+        Producto p = productoRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        p.setEstado("0");
+        productoRepo.save(p);
+    }
 
   @Override
   public List<CategoriaProd> listarCategorias() { 
