@@ -27,28 +27,34 @@ public class SolicitudesServiceImpl implements SolicitudesService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SolicitudResponseDTO> listarSolicitudes() {
         return soliRepo.findAll().stream().map(s -> {
-            SolicitudResponseDTO dto = new SolicitudResponseDTO();
-            dto.setId(s.getId());
-            dto.setRut(s.getRut());
-            dto.setMotivo(s.getMotivo());
-            dto.setPrioridad(s.getPrioridad());
-            dto.setEstado(s.getEstado());
-            dto.setFechaSolicitud(s.getFecha());
-
+            
+            // 1. Construimos la lista de detalles usando Builder
+            List<DetalleSolicitudDTO> detDtos = null;
             if (s.getDetalles() != null) {
-                List<DetalleSolicitudDTO> detDtos = s.getDetalles().stream().map(d -> {
-                    DetalleSolicitudDTO dd = new DetalleSolicitudDTO();
-                    dd.setIdProducto(d.getIdProducto());
-                    dd.setCantidad(d.getCantidad());
-                    dd.setFechaInicio(d.getFechaInicio());
-                    dd.setFechaRetorno(d.getFechaRetorno());
-                    return dd;
-                }).collect(Collectors.toList());
-                dto.setDetalles(detDtos);
+                detDtos = s.getDetalles().stream().map(d -> 
+                    DetalleSolicitudDTO.builder()
+                        .idProducto(d.getIdProducto())
+                        .cantidad(d.getCantidad())
+                        .fechaInicio(d.getFechaInicioPrestamo()) // Recordar corrección de nombre columna
+                        .fechaRetorno(d.getFechaRetornoPrestamo())
+                        .build()
+                ).collect(Collectors.toList());
             }
-            return dto;
+
+            // 2. Construimos el DTO principal usando Builder
+            return SolicitudResponseDTO.builder()
+                    .id(s.getId())
+                    .rut(s.getRut())
+                    .motivo(s.getMotivo())
+                    .prioridad(s.getPrioridad())
+                    .estado(s.getEstado())
+                    .fechaSolicitud(s.getFecha())
+                    .detalles(detDtos)
+                    .build();
+
         }).collect(Collectors.toList());
     }
 
@@ -56,30 +62,32 @@ public class SolicitudesServiceImpl implements SolicitudesService {
     @Transactional
     public Map<String, Object> crearSolicitud(SolicitudRequestDTO req) {
         
-        // Creamos la cabecera
-        SoliPrestamo s = new SoliPrestamo();
-        s.setRut(req.getRut());
-        s.setMotivo(req.getMotivo());
-        s.setPrioridad(req.getPrioridad());
-        s.setFecha(LocalDate.now());
-        s.setEstado("pendiente");
+        // 1. Crear cabecera (Solicitud) usando Builder
+        SoliPrestamo s = SoliPrestamo.builder()
+                .rut(req.getRut())
+                .motivo(req.getMotivo())
+                .prioridad(req.getPrioridad())
+                .fecha(LocalDate.now())
+                .estado("pendiente")
+                .build();
         
-        // Guardamos primero para obtener el ID
+        // Guardar para generar ID
         SoliPrestamo guardado = soliRepo.save(s);
 
-        // Procesamos los detalles
+        // 2. Procesar detalles
         if (req.getProductos() != null && !req.getProductos().isEmpty()) {
             List<DetPrestamo> detalles = new ArrayList<>();
+            
             for (DetalleSolicitudDTO item : req.getProductos()) {
-                DetPrestamo d = new DetPrestamo();
-                d.setCantidad(item.getCantidad());
-                d.setIdProducto(item.getIdProducto());
-                // Validamos fechas (o usamos defaults)
-                d.setFechaInicio(item.getFechaInicio() != null ? item.getFechaInicio() : LocalDate.now());
-                d.setFechaRetorno(item.getFechaRetorno() != null ? item.getFechaRetorno() : LocalDate.now().plusDays(3));
+                // Usamos Builder para crear la entidad de detalle
+                DetPrestamo d = DetPrestamo.builder()
+                        .cantidad(item.getCantidad())
+                        .idProducto(item.getIdProducto())
+                        .fechaInicioPrestamo(item.getFechaInicio() != null ? item.getFechaInicio() : LocalDate.now())
+                        .fechaRetornoPrestamo(item.getFechaRetorno() != null ? item.getFechaRetorno() : LocalDate.now().plusDays(3))
+                        .solicitud(guardado) // Asignamos la relación
+                        .build();
                 
-                // Asignamos la relación
-                d.setSolicitud(guardado);
                 detalles.add(d);
             }
             detRepo.saveAll(detalles);
@@ -97,11 +105,10 @@ public class SolicitudesServiceImpl implements SolicitudesService {
         SoliPrestamo s = soliRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con ID: " + id));
 
-        // Validación simple de estados permitidos
         if (!nuevoEstado.equalsIgnoreCase("aprobado") && 
             !nuevoEstado.equalsIgnoreCase("pendiente") && 
             !nuevoEstado.equalsIgnoreCase("rechazado")) {
-            throw new BadRequestException("Estado inválido. Valores permitidos: aprobado, pendiente, rechazado");
+            throw new BadRequestException("Estado inválido. Valores: aprobado, pendiente, rechazado");
         }
 
         s.setEstado(nuevoEstado);

@@ -32,8 +32,7 @@ public class SoliPrestamo {
 
     @Column(name = "prioridad", nullable = false)
     private String prioridad;
-
-    // Relación Bidireccional: Una solicitud tiene muchos detalles
+    
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetPrestamo> detalles;
 }
