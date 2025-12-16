@@ -1,9 +1,3 @@
-Aquí tienes una propuesta completa para el archivo `README.md` de tu repositorio. He estructurado la información basándome en el código fuente proporcionado (backend en Spring Boot, frontend vanilla JS) y el contexto del "Acta de Constitución".
-
-Puedes copiar y pegar el siguiente contenido directamente en tu archivo `README.md`:
-
------
-
 # Sistema de Gestión de Pañol - Duoc UC 🛠️📚
 
 Este proyecto consiste en una solución integral para la administración, control y trazabilidad de los recursos, equipos y herramientas de la **Escuela de Informática y Telecomunicaciones del Duoc UC**.
