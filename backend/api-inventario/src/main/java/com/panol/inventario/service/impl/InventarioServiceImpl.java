@@ -1,11 +1,13 @@
 package com.panol.inventario.service.impl;
 
 import com.panol.inventario.dto.*;
+import com.panol.inventario.exceptions.*;
 import com.panol.inventario.models.*;
 import com.panol.inventario.repository.*;
 import com.panol.inventario.service.InventarioService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -21,14 +23,9 @@ public class InventarioServiceImpl implements InventarioService {
   private final StockRepository stockRepo;
   private final InventarioRepository inventarioRepo;
 
-  public InventarioServiceImpl(
-      ProductoRepository productoRepo,
-      CategoriaProdRepository categoriaRepo,
-      MarcaRepository marcaRepo,
-      UbicacionInvRepository ubicacionRepo,
-      StockRepository stockRepo,
-      InventarioRepository inventarioRepo
-  ) {
+  public InventarioServiceImpl(ProductoRepository productoRepo, CategoriaProdRepository categoriaRepo,
+      MarcaRepository marcaRepo, UbicacionInvRepository ubicacionRepo,
+      StockRepository stockRepo, InventarioRepository inventarioRepo) {
     this.productoRepo = productoRepo;
     this.categoriaRepo = categoriaRepo;
     this.marcaRepo = marcaRepo;
@@ -38,48 +35,36 @@ public class InventarioServiceImpl implements InventarioService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<ProductoResponseDTO> listarInventario() {
-    List<Producto> productos = productoRepo.findAll();
-    List<ProductoResponseDTO> out = new ArrayList<>();
-
-    for (Producto p : productos) {
-      // Manejo seguro de nulos
-      int disponible = (p.getInventario() != null && p.getInventario().getStock() != null) 
-          ? p.getInventario().getStock().getCantidad() : 0;
-      int total = disponible; 
-
-      ProductoResponseDTO r = new ProductoResponseDTO();
-      r.setId(p.getId());
-      r.setNombre(p.getNombreProducto());
-      r.setCodigo(p.getCodInterno());
-      if (p.getCategoria() != null) {
-          r.setCategoria(p.getCategoria().getNombre());
-      }
-      r.setStock_disponible(disponible);
-      r.setStock_prestado(0); 
-      r.setStock_total(total);
-      r.setEstado(p.getEstado());
-      out.add(r);
-    }
-    return out;
+    return productoRepo.findAll().stream()
+        .filter(p -> "1".equals(p.getEstado())) // Solo listar activos
+        .map(this::mapToDTO)
+        .collect(Collectors.toList());
   }
 
   @Override
+  @Transactional(readOnly = true)
   public Map<String, Object> obtenerProducto(int id) {
-    Producto p = productoRepo.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+    Producto p = productoRepo.findById(id)
+        .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
+
     Map<String, Object> res = new HashMap<>();
     res.put("id", p.getId());
     res.put("cod_interno", p.getCodInterno());
     res.put("nombre_producto", p.getNombreProducto());
     res.put("estado", p.getEstado());
-    if (p.getCategoria() != null) res.put("categoria", p.getCategoria().getId());
-    if (p.getMarca() != null) res.put("marca", p.getMarca().getId());
-    
+
+    if (p.getCategoria() != null)
+      res.put("categoria", p.getCategoria().getId());
+    if (p.getMarca() != null)
+      res.put("marca", p.getMarca().getId());
+
     if (p.getInventario() != null) {
-        if(p.getInventario().getUbicacion() != null) 
-            res.put("ubicacion", p.getInventario().getUbicacion().getId());
-        if(p.getInventario().getStock() != null)
-            res.put("stock", p.getInventario().getStock().getCantidad());
+      if (p.getInventario().getUbicacion() != null)
+        res.put("ubicacion", p.getInventario().getUbicacion().getId());
+      if (p.getInventario().getStock() != null)
+        res.put("stock", p.getInventario().getStock().getCantidad());
     }
     return res;
   }
@@ -87,133 +72,172 @@ public class InventarioServiceImpl implements InventarioService {
   @Override
   @Transactional
   public void crearProducto(ProductoRequestDTO req) {
+    // 1. Validar que no exista el código interno
+    if (productoRepo.existsByCodInterno(req.getCod_interno())) {
+      throw new BadRequestException("El código interno ya existe en el sistema.");
+    }
+
+    // 2. Buscar entidades relacionadas
     CategoriaProd cat = categoriaRepo.findById(req.getCategoria())
-        .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Categoría no válida"));
     Marca mar = marcaRepo.findById(req.getMarca())
-        .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Marca no válida"));
     UbicacionInv ubi = ubicacionRepo.findById(req.getUbicacion())
-        .orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Ubicación no válida"));
 
-    Stock stock = new Stock();
-    stock.setStockMinimo(0);
-    stock.setStockMaximo(0);
-    stock.setCantidad(req.getCantidad());
-    stock = stockRepo.save(stock);
+    // 3. Crear Stock
+    Stock stock = Stock.builder()
+        .cantidad(req.getCantidad())
+        .stockMinimo(5) // Valor por defecto
+        .stockMaximo(100)
+        .build();
 
-    Inventario inv = new Inventario();
-    inv.setObservacion("Ingreso inicial");
-    inv.setFechaActualizacion(LocalDate.now());
-    inv.setUbicacion(ubi);
-    inv.setStock(stock);
-    inv = inventarioRepo.save(inv);
+    // 4. Crear Inventario (vinculado a stock y ubicación)
+    Inventario inv = Inventario.builder()
+        .observacion("Ingreso Inicial")
+        .fechaActualizacion(LocalDate.now())
+        .ubicacion(ubi)
+        .stock(stock)
+        .build();
 
-    Producto p = new Producto();
-    p.setCodInterno(req.getCod_interno());
-    p.setNombreProducto(req.getNombre_producto());
-    p.setEstado("1");
-    p.setCategoria(cat);
-    p.setMarca(mar);
-    p.setInventario(inv);
+    // 5. Crear Producto
+    Producto p = Producto.builder()
+        .codInterno(req.getCod_interno())
+        .nombreProducto(req.getNombre_producto())
+        .estado("1") // Activo por defecto
+        .categoria(cat)
+        .marca(mar)
+        .inventario(inv) // JPA guardará Inventario y Stock en cascada
+        .build();
 
     productoRepo.save(p);
+  }
+
+  @Override
+  @Transactional
+  public void crearProducto(ProductoRequestDTO req, MultipartFile file) {
+    // Por compatibilidad: delega a la versión sin archivo.
+    crearProducto(req);
   }
 
   @Override
   @Transactional
   public void editarProducto(int id, ProductoEditRequestDTO req) {
     Producto p = productoRepo.findById(id)
-        .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
     CategoriaProd cat = categoriaRepo.findById(req.getCategoria())
-        .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Categoría no válida"));
     Marca mar = marcaRepo.findById(req.getMarca())
-        .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Marca no válida"));
     UbicacionInv ubi = ubicacionRepo.findById(req.getUbicacion())
-        .orElseThrow(() -> new RuntimeException("Ubicación no encontrada"));
+        .orElseThrow(() -> new NotFoundException("Ubicación no válida"));
 
+    // Actualizar datos básicos
     p.setNombreProducto(req.getNombre_producto());
-    p.setEstado(req.getEstado());
     p.setCategoria(cat);
     p.setMarca(mar);
+    if (req.getEstado() != null)
+      p.setEstado(req.getEstado());
 
+    // Actualizar Inventario y Ubicación
     Inventario inv = p.getInventario();
+    if (inv == null) {
+      // Caso borde: si no existiera inventario (no debería pasar)
+      inv = new Inventario();
+      inv.setFechaActualizacion(LocalDate.now());
+      p.setInventario(inv);
+    }
     inv.setUbicacion(ubi);
     inv.setFechaActualizacion(LocalDate.now());
 
+    // Actualizar Stock
     Stock stock = inv.getStock();
+    if (stock == null) {
+      stock = new Stock();
+      inv.setStock(stock);
+    }
     stock.setCantidad(req.getStock());
 
-    stockRepo.save(stock);
-    inventarioRepo.save(inv);
-    productoRepo.save(p);
+    productoRepo.save(p); // Cascada guarda todo
+  }
+
+  @Override
+  @Transactional
+  public void editarProducto(int id, ProductoEditRequestDTO req, MultipartFile file) {
+    // Por compatibilidad: delega a la versión sin archivo.
+    editarProducto(id, req);
   }
 
   @Override
   @Transactional
   public void eliminarProducto(int id) {
-        Producto p = productoRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-        p.setEstado("0");
-        productoRepo.save(p);
-    }
+    Producto p = productoRepo.findById(id)
+        .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
+    p.setEstado("0"); // Eliminación lógica
+    productoRepo.save(p);
+  }
 
-  @Override
-  public List<CategoriaProd> listarCategorias() { 
-      return categoriaRepo.findAll(); 
+  // --- Métodos Auxiliares ---
+
+  private ProductoResponseDTO mapToDTO(Producto p) {
+    int cantidad = (p.getInventario() != null && p.getInventario().getStock() != null)
+        ? p.getInventario().getStock().getCantidad()
+        : 0;
+
+    return ProductoResponseDTO.builder()
+        .id(p.getId())
+        .codigo(p.getCodInterno())
+        .nombre(p.getNombreProducto())
+        .categoria(p.getCategoria() != null ? p.getCategoria().getNombre() : "Sin Categ.")
+        .stock_total(cantidad)
+        .stock_disponible(cantidad) // Por ahora igual, luego se descuenta prestados si es necesario
+        .stock_prestado(0)
+        .estado(p.getEstado())
+        .build();
   }
 
   @Override
-  public List<Marca> listarMarcas() { 
-      return marcaRepo.findAll(); 
+  public List<CategoriaProd> listarCategorias() {
+    return categoriaRepo.findAll();
   }
-  
+
   @Override
-  public List<Map<String,Object>> listarUbicaciones() {
+  public List<Marca> listarMarcas() {
+    return marcaRepo.findAll();
+  }
+
+  @Override
+  public List<Map<String, Object>> listarUbicaciones() {
     return ubicacionRepo.findAll().stream().map(u -> {
-      Map<String,Object> m = new HashMap<>();
+      Map<String, Object> m = new HashMap<>();
       m.put("id_ubicacion", u.getId());
-      m.put("nombre", u.getNombreSala() + " - Estante " + u.getEstante() + " Nivel " + u.getNivel());
+      m.put("nombre", u.getNombreSala() + " - " + u.getEstante());
       return m;
     }).collect(Collectors.toList());
   }
 
   @Override
-  @Transactional
-  public Map<String,Object> crearCategoria(String nombre) {
+  public Map<String, Object> crearCategoria(String nombre) {
     CategoriaProd c = new CategoriaProd();
     c.setNombre(nombre);
     c = categoriaRepo.save(c);
-    Map<String,Object> result = new HashMap<>();
-    result.put("id", c.getId());
-    result.put("nombre", c.getNombre());
-    return result;
+    return Map.of("id", c.getId(), "nombre", c.getNombre());
   }
 
   @Override
-  @Transactional
-  public Map<String,Object> crearMarca(String nombre) {
+  public Map<String, Object> crearMarca(String nombre) {
     Marca m = new Marca();
     m.setNombre(nombre);
     m = marcaRepo.save(m);
-    Map<String,Object> result = new HashMap<>();
-    result.put("id", m.getId());
-    result.put("nombre", m.getNombre());
-    return result;
+    return Map.of("id", m.getId(), "nombre", m.getNombre());
   }
 
   @Override
-  @Transactional
-  public Map<String,Object> crearUbicacion(String sala, String estante, Integer nivel, String descripcion) {
-    UbicacionInv u = new UbicacionInv();
-    u.setNombreSala(sala);
-    u.setEstante(estante);
-    u.setNivel(nivel);
-    u.setDescripcion(descripcion);
+  public Map<String, Object> crearUbicacion(String sala, String estante, Integer nivel, String descripcion) {
+    UbicacionInv u = UbicacionInv.builder()
+        .nombreSala(sala).estante(estante).nivel(nivel).descripcion(descripcion).build();
     u = ubicacionRepo.save(u);
-    String nombre = sala + " - Estante " + estante + " Nivel " + nivel;
-    Map<String,Object> result = new HashMap<>();
-    result.put("id", u.getId());
-    result.put("nombre", nombre);
-    return result;
+    return Map.of("id", u.getId(), "nombre", sala + " - " + estante);
   }
 }

@@ -1,31 +1,27 @@
 package com.panol.inventario.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "STOCK")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Stock {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id_stock")
   private Integer id;
 
-  @Column(name = "stock_minimo", nullable = false)
+  @Column(name = "stock_minimo")
   private Integer stockMinimo;
 
-  @Column(name = "stock_maximo", nullable = false)
+  @Column(name = "stock_maximo")
   private Integer stockMaximo;
 
-  @Column(name = "cantidad", nullable = false)
+  @Column(name = "cantidad")
   private Integer cantidad;
 }

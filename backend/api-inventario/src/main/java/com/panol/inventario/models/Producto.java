@@ -5,12 +5,12 @@ import lombok.*;
 
 @Entity
 @Table(name = "PRODUCTO")
-@Getter 
-@Setter 
-@NoArgsConstructor 
-@AllArgsConstructor 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Producto {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_principal")
@@ -23,17 +23,18 @@ public class Producto {
     private String nombreProducto;
 
     @Column(name = "estado", nullable = false)
-    private String estado;
+    private String estado; // "1" Activo, "0" Eliminado
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "INVENTARIO_id_inventario", nullable = false)
+    // Relación con Inventario (que a su vez tiene Stock y Ubicación)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "INVENTARIO_id_inventario", referencedColumnName = "id_inventario")
     private Inventario inventario;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "CATEGORIA_PROD_id_categoria", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "CATEGORIA_PROD_id_categoria")
     private CategoriaProd categoria;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "MARCA_id_marca", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "MARCA_id_marca")
     private Marca marca;
 }
