@@ -1,7 +1,10 @@
 package com.panol.prestamos.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "STOCK")
@@ -11,7 +14,6 @@ import lombok.Data;
 @Builder
 public class Stock {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_stock")
     private Integer id;
 
