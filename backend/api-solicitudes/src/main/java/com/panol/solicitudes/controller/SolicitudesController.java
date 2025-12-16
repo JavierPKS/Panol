@@ -1,62 +1,61 @@
 package com.panol.solicitudes.controller;
 
-import com.panol.solicitudes.entity.SoliPrestamo;
-import com.panol.solicitudes.repository.SoliPrestamoRepository;
+import com.panol.solicitudes.dto.SolicitudRequestDTO;
+import com.panol.solicitudes.dto.SolicitudResponseDTO;
+import com.panol.solicitudes.service.SolicitudesService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/solicitudes")
 public class SolicitudesController {
 
-  private final SoliPrestamoRepository repo;
+    private final SolicitudesService service;
 
-  public SolicitudesController(SoliPrestamoRepository repo) {
-    this.repo = repo;
-  }
+    public SolicitudesController(SolicitudesService service) {
+        this.service = service;
+    }
 
-  @GetMapping
-  public List<SoliPrestamo> listar() {
-    return repo.findAll();
-  }
+    @GetMapping
+    public ResponseEntity<List<SolicitudResponseDTO>> listar() {
+        return ResponseEntity.ok(service.listarSolicitudes());
+    }
 
-  @PostMapping
-  public Map<String,Object> crear(@RequestBody Map<String,Object> body) {
-    Integer rut = Integer.valueOf(body.get("rut").toString());
-    String motivo = body.get("motivo").toString();
-    String prioridad = body.get("prioridad").toString();
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> crear(@Valid @RequestBody SolicitudRequestDTO req) {
+        // Si @Valid falla, el GlobalExceptionHandler captura el error automáticamente.
+        return ResponseEntity.ok(service.crearSolicitud(req));
+    }
 
-    SoliPrestamo s = new SoliPrestamo();
-    s.setEstado("pendiente");
-    s.setRut(rut);
-    s.setFecha(LocalDate.now());
-    s.setMotivo(motivo);
-    s.setPrioridad(prioridad);
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Map<String, String>> cambiarEstado(
+            @PathVariable int id,
+            @RequestBody Map<String, String> body) {
+        
+        String nuevoEstado = body.get("estado");
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            // Retornamos un badRequest manual si falta el campo, o podríamos crear un DTO para esto
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe enviar el campo 'estado'"));
+        }
 
-    s = repo.save(s);
-    Map<String,Object> result = new HashMap<>();
-    result.put("message", "Solicitud creada");
-    result.put("id", s.getId());
-    return result;
-  }
+        service.cambiarEstado(id, nuevoEstado);
 
-  @PutMapping("/{id}")
-  public Map<String,String> cambiarEstado(@PathVariable int id, @RequestBody Map<String,String> body) {
-    SoliPrestamo s = repo.findById(id).orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-    s.setEstado(body.get("estado"));
-    repo.save(s);
-    Map<String,String> result = new HashMap<>();
-    result.put("message", "Estado actualizado");
-    return result;
-  }
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Estado actualizado correctamente");
+        return ResponseEntity.ok(response);
+    }
 
-  @DeleteMapping("/{id}")
-  public Map<String,String> eliminar(@PathVariable int id) {
-    repo.deleteById(id);
-    Map<String,String> result = new HashMap<>();
-    result.put("message", "Solicitud eliminada");
-    return result;
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> eliminar(@PathVariable int id) {
+        service.eliminarSolicitud(id);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Solicitud eliminada correctamente");
+        return ResponseEntity.ok(response);
+    }
 }
