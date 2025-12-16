@@ -1,6 +1,7 @@
 package com.panol.solicitudes.service;
 
-import com.panol.solicitudes.dto.*;
+import com.panol.solicitudes.dto.SolicitudRequestDTO;
+import com.panol.solicitudes.dto.SolicitudResponseDTO;
 import java.util.List;
 import java.util.Map;
 

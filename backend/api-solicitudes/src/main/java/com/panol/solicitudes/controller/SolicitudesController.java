@@ -28,7 +28,6 @@ public class SolicitudesController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> crear(@Valid @RequestBody SolicitudRequestDTO req) {
-        // Si @Valid falla, el GlobalExceptionHandler captura el error automáticamente.
         return ResponseEntity.ok(service.crearSolicitud(req));
     }
 
@@ -39,7 +38,6 @@ public class SolicitudesController {
         
         String nuevoEstado = body.get("estado");
         if (nuevoEstado == null || nuevoEstado.isBlank()) {
-            // Retornamos un badRequest manual si falta el campo, o podríamos crear un DTO para esto
             return ResponseEntity.badRequest().body(Map.of("error", "Debe enviar el campo 'estado'"));
         }
 

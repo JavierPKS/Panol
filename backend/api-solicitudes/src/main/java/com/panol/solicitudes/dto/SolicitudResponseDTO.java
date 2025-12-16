@@ -12,11 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class SolicitudResponseDTO {
-    private Integer id_solicitud;
-    private Integer rut_usuario;
-    private String motivo_prestamo;
+    private Integer id;
+    private Integer rut;
+    private String motivo;
     private String prioridad;
-    private String estado_solicitud;
-    private LocalDate fecha_solicitud;
-    private List<DetalleSolicitudDTO> detalle_productos;
+    private String estado;
+    private LocalDate fechaSolicitud;
+    private List<DetalleSolicitudDTO> detalles;
 }
