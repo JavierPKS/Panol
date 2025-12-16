@@ -12,6 +12,7 @@ import org.springframework.hateoas.RepresentationModel;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = false)
+
 public class ProductoResponseDTO extends RepresentationModel<ProductoResponseDTO> {
   private Integer id;
   private String nombre;
