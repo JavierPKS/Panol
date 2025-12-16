@@ -1,12 +1,15 @@
 package com.panol.historial.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
+@Data
 @Entity
 @Table(name = "DET_PRESTAMO")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -31,7 +34,8 @@ public class Historial {
 
   @Column(name = "SOLI_PRESTAMO_id_prestamo", nullable = false)
   private Integer idPrestamo;
-
-  @Column(name = "PRODUCTO_id_principal", nullable = false)
-  private Integer idProducto;
+  
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "PRODUCTO_id_principal", nullable = false)
+  private Producto producto;
 }
