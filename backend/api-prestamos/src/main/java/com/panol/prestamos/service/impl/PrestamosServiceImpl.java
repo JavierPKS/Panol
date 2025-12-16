@@ -25,12 +25,12 @@ public class PrestamosServiceImpl implements PrestamosService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PrestamoResponseDTO> listarPrestamos() {
-        // JPA busca todos y nosotros los convertimos a DTO
         return detRepo.findAll().stream().map(det -> 
             PrestamoResponseDTO.builder()
                 .id_detalle(det.getIdDetalle())
-                .nombre_producto(det.getProducto().getNombre()) // Obtenemos nombre SIN QUERY NATIVA
+                .nombre_producto(det.getProducto() != null ? det.getProducto().getNombre() : "Sin Nombre")
                 .cantidad(det.getCantidad())
                 .fecha_incio_prestamo(det.getFechaInicioPrestamo())
                 .fecha_devolucion_prestamo(det.getFechaDevolucionPrestamo())
@@ -41,31 +41,33 @@ public class PrestamosServiceImpl implements PrestamosService {
     @Override
     @Transactional
     public void prestar(PrestarRequestDTO req) {
+        // 1. Obtener producto
         Producto producto = productoRepo.findById(req.getId_producto())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         
-        // Acceso JPA a Stock: Producto -> Inventario -> Stock
-        if(producto.getInventario() == null || producto.getInventario().getStock() == null) {
-             throw new RuntimeException("El producto no tiene inventario asociado");
+        // 2. Validar integridad del Stock
+        if (producto.getInventario() == null || producto.getInventario().getStock() == null) {
+             throw new RuntimeException("El producto no tiene stock configurado");
         }
         
         Stock stock = producto.getInventario().getStock();
 
+        // 3. Validar cantidad disponible
         if (stock.getCantidad() < req.getCantidad()) {
             throw new RuntimeException("Stock insuficiente");
         }
 
-        // Crear detalle de préstamo
+        // 4. Registrar el préstamo
         DetPrestamo det = new DetPrestamo();
         det.setCantidad(req.getCantidad());
         det.setFechaInicioPrestamo(LocalDate.now());
-        det.setFechaRetornoPrestamo(LocalDate.now().plusDays(7));
+        det.setFechaRetornoPrestamo(LocalDate.now().plusDays(7)); // Lógica: 7 días para devolver
         det.setIdPrestamo(req.getId_prestamo());
-        det.setProducto(producto); // Asignamos la entidad completa
+        det.setProducto(producto);
 
         detRepo.save(det);
 
-        // Descontar stock
+        // 5. Descontar stock
         stock.setCantidad(stock.getCantidad() - req.getCantidad());
         stockRepo.save(stock);
     }
@@ -73,19 +75,25 @@ public class PrestamosServiceImpl implements PrestamosService {
     @Override
     @Transactional
     public void devolver(DevolverRequestDTO req) {
+        // 1. Buscar el detalle del préstamo
         DetPrestamo det = detRepo.findById(req.getId_detalle())
-                .orElseThrow(() -> new RuntimeException("Detalle de préstamo no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Préstamo no encontrado"));
 
-        if(det.getFechaDevolucionPrestamo() != null) {
-            throw new RuntimeException("Este préstamo ya fue devuelto");
+        // 2. Validar si ya fue devuelto
+        if (det.getFechaDevolucionPrestamo() != null) {
+            throw new RuntimeException("El préstamo ya fue devuelto anteriormente");
         }
 
+        // 3. Registrar fecha de devolución real
         det.setFechaDevolucionPrestamo(LocalDate.now());
         detRepo.save(det);
 
-        // Reponer stock
-        Stock stock = det.getProducto().getInventario().getStock();
-        stock.setCantidad(stock.getCantidad() + req.getCantidad());
-        stockRepo.save(stock);
+        // 4. Reponer stock
+        if (det.getProducto() != null && det.getProducto().getInventario() != null) {
+            Stock stock = det.getProducto().getInventario().getStock();
+            // Se repone la cantidad original del préstamo
+            stock.setCantidad(stock.getCantidad() + det.getCantidad());
+            stockRepo.save(stock);
+        }
     }
 }
