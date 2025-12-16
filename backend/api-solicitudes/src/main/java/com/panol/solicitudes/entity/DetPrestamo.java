@@ -15,25 +15,25 @@ public class DetPrestamo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_detalle")
-    private Integer idDetalle;
+    private Integer id;
 
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
 
-    // IMPORTANTE: Mismo nombre de columna que en api-prestamos (respetando el typo original de la BD)
     @Column(name = "fecha_incio_prestamo", nullable = false)
-    private LocalDate fechaInicioPrestamo;
+    private LocalDate fechaInicio;
 
     @Column(name = "fecha_retorno_prestamo", nullable = false)
-    private LocalDate fechaRetornoPrestamo;
+    private LocalDate fechaRetorno;
 
     @Column(name = "fecha_devolucion_prestamo")
-    private LocalDate fechaDevolucionPrestamo;
+    private LocalDate fechaDevolucion;
 
     @Column(name = "PRODUCTO_id_principal", nullable = false)
     private Integer idProducto;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "SOLI_PRESTAMO_id_prestamo", nullable = false)
+    @JoinColumn(name = "SOLI_PRESTAMO_id_prestamo")
+    @ToString.Exclude 
     private SoliPrestamo solicitud;
 }

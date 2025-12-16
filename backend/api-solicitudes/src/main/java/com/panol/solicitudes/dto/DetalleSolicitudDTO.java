@@ -11,8 +11,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class DetalleSolicitudDTO {
-    private Integer idProducto;
+    private Integer id_producto;
     private Integer cantidad;
-    private LocalDate fechaInicio;
-    private LocalDate fechaRetorno;
+    private LocalDate fecha_inicio;
+    private LocalDate fecha_retorno;
 }

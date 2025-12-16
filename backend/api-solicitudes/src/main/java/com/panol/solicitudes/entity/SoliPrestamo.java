@@ -18,7 +18,7 @@ public class SoliPrestamo {
     @Column(name = "id_prestamo")
     private Integer id;
 
-    @Column(name = "estado_solicitud", nullable = false)
+    @Column(name = "estado_solicitud", nullable = false, length = 15)
     private String estado;
 
     @Column(name = "USUARIO_rut", nullable = false)
@@ -27,12 +27,13 @@ public class SoliPrestamo {
     @Column(name = "fecha_solicitud", nullable = false)
     private LocalDate fecha;
 
-    @Column(name = "motivo_prestamo", nullable = false)
+    @Column(name = "motivo_prestamo", nullable = false, length = 100)
     private String motivo;
 
-    @Column(name = "prioridad", nullable = false)
+    @Column(name = "prioridad", nullable = false, length = 25)
     private String prioridad;
-    
+
     @OneToMany(mappedBy = "solicitud", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<DetPrestamo> detalles;
 }
