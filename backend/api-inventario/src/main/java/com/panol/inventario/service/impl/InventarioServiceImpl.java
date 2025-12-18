@@ -339,13 +339,27 @@ public class InventarioServiceImpl implements InventarioService {
                 ? p.getInventario().getStock().getCantidad()
                 : 0;
 
+        // Lógica para obtener el nombre de la ubicación de forma segura (evitando NullPointerException)
+        String nombreUbicacion = "Sin Ubicación";
+        if (p.getInventario() != null && p.getInventario().getUbicacion() != null) {
+            // Concatenamos Sala y Estante para que sea más descriptivo
+            nombreUbicacion = p.getInventario().getUbicacion().getNombreSala() 
+                            + " - " + p.getInventario().getUbicacion().getEstante();
+        }
+
         return ProductoResponseDTO.builder()
                 .id(p.getId())
                 .codigo(p.getCodInterno())
-                .nombre(p.getNombreProducto())
+                .nombre(p.getNombreProducto()) // Ojo: asegúrate que tu frontend lea "nombre" o cambia esto a "nombre_producto"
                 .categoria(p.getCategoria() != null ? p.getCategoria().getNombre() : "Sin Categ.")
+                
+                // --- MAPEO DE LOS NUEVOS CAMPOS ---
+                .marca(p.getMarca() != null ? p.getMarca().getNombre() : "Sin Marca")
+                .ubicacion(nombreUbicacion)
+                // ----------------------------------
+
                 .stock_total(cantidad)
-                .stock_disponible(cantidad) // Por ahora igual, luego se descuenta prestados si es necesario
+                .stock_disponible(cantidad)
                 .stock_prestado(0)
                 .estado(p.getEstado())
                 .build();
@@ -374,4 +388,6 @@ public class InventarioServiceImpl implements InventarioService {
                 .descripcion(u.getDescripcion())
                 .build();
     }
+
+
 }

@@ -4,152 +4,40 @@
     <meta charset="UTF-8">
     <title>Sistema de Gestión de Pañol - Duoc UC</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        /* Estilos inline adicionales */
+        .product-list-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: #f9f9f9;
+        }
+        .remove-item {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        /* Estilo para el código de barras */
+        #barcode-container img {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-
-<!-- MODAL — Crear Producto -->
-<div id="modal-crear-producto" class="modal hidden">
-  <div class="modal-content modal-wide">
-      <h3>Nuevo Producto</h3>
-
-      <label for="prod-codigo">Código interno:</label>
-      <input id="prod-codigo" type="text">
-
-      <label for="prod-nombre">Nombre producto:</label>
-      <input id="prod-nombre" type="text">
-
-      <!-- CATEGORÍA -->
-      <label for="prod-cat">Categoría:</label>
-      <div class="input-row">
-        <select id="prod-cat"></select>
-        <button class="btn-mini" onclick="abrirModal('modal-add-cat')">+</button>
-      </div>
-
-      <!-- MARCA -->
-      <label for="prod-marca">Marca:</label>
-      <div class="input-row">
-        <select id="prod-marca"></select>
-        <button class="btn-mini" onclick="abrirModal('modal-add-marca')">+</button>
-      </div>
-
-      <!-- STOCK -->
-      <label for="prod-stock">Stock inicial:</label>
-      <input id="prod-stock" type="number" value="0" min="0">
-
-      <!-- UBICACIÓN -->
-      <label for="prod-ubi">Ubicación:</label>
-      <div class="input-row">
-        <select id="prod-ubi"></select>
-        <button class="btn-mini" onclick="abrirModal('modal-add-ubi')">+</button>
-      </div>
-
-      <div class="modal-actions">
-          <button class="btn-primary" onclick="guardarProducto()">Guardar</button>
-          <button onclick="cerrarModal('modal-crear-producto')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
-
-<!-- MODAL — Editar Producto -->
-<div id="modal-editar-producto" class="modal hidden">
-  <div class="modal-content modal-wide">
-      <h3>Editar Producto</h3>
-
-      <input type="hidden" id="edit-id">
-
-      <label>Código interno:</label>
-      <input id="edit-codigo" type="text" disabled>
-
-      <label>Nombre producto:</label>
-      <input id="edit-nombre" type="text">
-
-      <label>Categoría:</label>
-      <select id="edit-cat"></select>
-
-      <label>Marca:</label>
-      <select id="edit-marca"></select>
-
-      <label>Ubicación:</label>
-      <select id="edit-ubi"></select>
-
-      <label>Stock actual:</label>
-      <input id="edit-stock" type="number" min="0">
-
-      <label>Estado:</label>
-      <input id="edit-estado" type="text">
-
-      <div class="modal-actions">
-          <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
-          <button onclick="cerrarModal('modal-editar-producto')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
-
-
-<!-- MODAL — Eliminar Producto -->
-<div id="modal-eliminar-producto" class="modal hidden">
-  <div class="modal-content">
-      <h3 style="color:red;">⚠ Confirmar eliminación</h3>
-      <p>¿Está seguro que desea eliminar este producto?</p>
-      <p><strong>Esta acción no se puede deshacer.</strong></p>
-
-      <input type="hidden" id="delete-id">
-
-      <div class="modal-actions">
-        <button class="btn-primary" onclick="confirmarEliminarProducto()">Eliminar</button>
-        <button class="btn-primary" onclick="cerrarModal('modal-eliminar-producto')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
-
-<!-- MODAL — Nueva Categoría -->
-<div id="modal-add-cat" class="modal hidden">
-  <div class="modal-content">
-      <h3>Nueva Categoría</h3>
-      <input id="new-cat-name" type="text" placeholder="Nombre categoría">
-      <div class="modal-actions">
-          <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
-          <button onclick="cerrarModal('modal-add-cat')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
-<!-- MODAL — Nueva Marca -->
-<div id="modal-add-marca" class="modal hidden">
-  <div class="modal-content">
-      <h3>Nueva Marca</h3>
-      <input id="new-marca-name" type="text" placeholder="Nombre marca">
-      <div class="modal-actions">
-          <button class="btn-primary" onclick="guardarMarca()">Guardar</button>
-          <button onclick="cerrarModal('modal-add-marca')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
-<!-- MODAL — Nueva Ubicación -->
-<div id="modal-add-ubi" class="modal hidden">
-  <div class="modal-content">
-      <h3>Nueva Ubicación</h3>
-      <input id="new-ubi-sala" type="text" placeholder="Sala">
-      <input id="new-ubi-estante" type="text" placeholder="Estante">
-      <input id="new-ubi-nivel" type="number" placeholder="Nivel">
-      <input id="new-ubi-desc" type="text" placeholder="Descripción (opcional)">
-      <div class="modal-actions">
-          <button class="btn-primary" onclick="guardarUbicacion()">Guardar</button>
-          <button onclick="cerrarModal('modal-add-ubi')">Cancelar</button>
-      </div>
-  </div>
-</div>
-
 
 <body>
 
-    <!-- HEADER INSTITUCIONAL -->
     <header class="header">
         <div class="header-left">
-            <img src="assets/img/logo-duoc.png" alt="Duoc UC" class="logo">
             <div>
                 <h1>Sistema de Gestión de Pañol</h1>
                 <p>Escuela de Informática y Telecomunicaciones</p>
@@ -157,7 +45,6 @@
         </div>
     </header>
 
-    <!-- NAVBAR -->
     <nav class="navbar">
         <ul>
             <li class="active" data-vista="inicio">Inicio</li>
@@ -169,96 +56,262 @@
         </ul>
     </nav>
 
-    <!-- CONTENIDO -->
     <main>
-
-        <!-- INICIO -->
         <section id="inicio" class="vista visible">
             <h2>Dashboard</h2>
-
             <div class="kpi-container">
                 <div class="kpi-card">
-                    Recursos Totales: <span id="kpi-total">-</span>
+                    Recursos Totales: <span id="kpi-total">Cargando...</span>
                 </div>
                 <div class="kpi-card">
-                    Disponibles: <span id="kpi-disponibles">-</span>
+                    Disponibles: <span id="kpi-disponibles">Cargando...</span>
                 </div>
                 <div class="kpi-card">
-                    Prestados: <span id="kpi-prestados">-</span>
+                    Prestados: <span id="kpi-prestados">Cargando...</span>
                 </div>
             </div>
-
-            <h3>Últimos préstamos</h3>
-            <p>(Aquí más adelante cargarás una tabla real desde la API de préstamos)</p>
         </section>
 
-        <!-- INVENTARIO -->
         <section id="inventario" class="vista">
             <div class="vista-header">
                 <h2>Inventario</h2>
-                <button class="btn-primary" id="btn-nuevo">Nuevo recurso</button>
+                <button class="btn-primary" id="btn-nuevo-producto">Nuevo recurso</button>
             </div>
 
             <table class="tabla" id="tabla-inventario">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
                         <th>Código</th>
+                        <th>Nombre</th>
                         <th>Categoría</th>
-                        <th>Stock Total</th>
-                        <th>Disponible</th>
-                        <th>Prestado</th>
-                        <th>Acciones</th>
-                    </tr>
+                        <th>Marca</th>
+                        <th>Ubicación</th>
+                        <th>Stock</th>
+                        <th>Acciones</th> </tr>
                 </thead>
                 <tbody>
-                    <!-- Se rellena con fetch desde app.js -->
-                </tbody>
+                    </tbody>
             </table>
         </section>
 
-        <!-- SOLICITUDES -->
         <section id="solicitudes" class="vista">
-            <h2>Solicitudes</h2>
-            <p>(Luego se conectará a /api/solicitudes)</p>
+            <div class="vista-header">
+                <h2>Solicitudes Pendientes</h2>
+                <button class="btn-primary" onclick="cargarSolicitudes()">Actualizar</button>
+            </div>
+            <table class="tabla" id="tabla-solicitudes">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>RUT Usuario</th>
+                        <th>Motivo</th>
+                        <th>Prioridad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </section>
 
-        <!-- PRÉSTAMOS Y DEVOLUCIONES -->
         <section id="prestamos" class="vista">
             <div class="vista-header">
-                <h2>Préstamos y Devoluciones</h2>
-                <button class="btn-primary" onclick="abrirModal('modal-nuevo-prestamo')">Registrar préstamo</button>
+                <h2>Préstamos Activos</h2>
+                <button class="btn-primary" onclick="abrirModalPrestamo()">Registrar préstamo</button>
             </div>
-
             <table class="tabla" id="tabla-prestamos">
                 <thead>
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Fecha Préstamo</th>
-                        <th>Fecha Devolución</th>
+                        <th>ID Préstamo</th>
+                        <th>RUT Usuario</th>
+                        <th>Fecha Solicitud</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Llenado automático -->
-                </tbody>
+                <tbody></tbody>
             </table>
         </section>
 
-        <!-- HISTORIAL -->
         <section id="historial" class="vista">
-            <h2>Historial</h2>
-            <p>(Luego se conectará a /api/historial)</p>
+            <div class="vista-header">
+                <h2>Historial de Movimientos</h2>
+                <button class="btn-primary" onclick="cargarHistorial()">Actualizar</button>
+            </div>
+            <table class="tabla" id="tabla-historial">
+                <thead>
+                    <tr>
+                        <th>ID Detalle</th>
+                        <th>Observación</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </section>
 
-        <!-- USUARIOS -->
         <section id="usuarios" class="vista">
-            <h2>Gestión de Usuarios</h2>
-            <p>(Luego se conectará a /api/usuarios)</p>
+            <div class="vista-header">
+                <h2>Gestión de Usuarios</h2>
+                <button class="btn-primary" onclick="abrirModalUsuario()">Nuevo Usuario</button>
+            </div>
+            <table class="tabla" id="tabla-usuarios">
+                <thead>
+                    <tr>
+                        <th>RUT</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </section>
-
     </main>
+
+    <div id="modal-crear-producto" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <h3>Nuevo Producto</h3>
+            <label>Código interno:</label> <input id="prod-codigo" type="number">
+            <label>Nombre producto:</label> <input id="prod-nombre" type="text">
+            
+            <label>Categoría:</label>
+            <div class="input-row">
+                <select id="prod-cat"></select>
+                <button class="btn-mini" onclick="abrirModal('modal-add-cat')">+</button>
+            </div>
+
+            <label>Marca:</label>
+            <div class="input-row">
+                <select id="prod-marca"></select>
+                <button class="btn-mini" onclick="abrirModal('modal-add-marca')">+</button>
+            </div>
+
+            <label>Stock inicial:</label> <input id="prod-stock" type="number" value="0" min="0">
+
+            <label>Ubicación:</label>
+            <div class="input-row">
+                <select id="prod-ubi"></select>
+                <button class="btn-mini" onclick="abrirModal('modal-add-ubi')">+</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarProducto()">Guardar</button>
+                <button onclick="cerrarModal('modal-crear-producto')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editar-producto" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <h3>Editar Producto</h3>
+            <input type="hidden" id="edit-id">
+            <label>Código interno:</label> <input id="edit-codigo" type="text" disabled>
+            <label>Nombre producto:</label> <input id="edit-nombre" type="text">
+            <label>Categoría:</label> <select id="edit-cat"></select>
+            <label>Marca:</label> <select id="edit-marca"></select>
+            <label>Ubicación:</label> <select id="edit-ubi"></select>
+            <label>Stock actual:</label> <input id="edit-stock" type="number" min="0">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
+                <button onclick="cerrarModal('modal-editar-producto')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-barcode" class="modal hidden">
+        <div class="modal-content" style="text-align: center;">
+            <h3>Código de Barras</h3>
+            <div id="barcode-container" style="margin: 20px 0;">
+                </div>
+            <p id="barcode-text" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 20px;"></p>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn-primary" onclick="imprimirBarcode()">Imprimir</button>
+                <button onclick="cerrarModal('modal-barcode')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-add-cat" class="modal hidden">
+        <div class="modal-content">
+            <h3>Nueva Categoría</h3>
+            <input id="new-cat-name" type="text" placeholder="Nombre">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
+                <button onclick="cerrarModal('modal-add-cat')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-add-marca" class="modal hidden">
+        <div class="modal-content">
+            <h3>Nueva Marca</h3>
+            <input id="new-marca-name" type="text" placeholder="Nombre">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarMarca()">Guardar</button>
+                <button onclick="cerrarModal('modal-add-marca')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-add-ubi" class="modal hidden">
+        <div class="modal-content">
+            <h3>Nueva Ubicación</h3>
+            <input id="new-ubi-sala" type="text" placeholder="Sala">
+            <input id="new-ubi-estante" type="text" placeholder="Estante">
+            <input id="new-ubi-nivel" type="number" placeholder="Nivel">
+            <input id="new-ubi-desc" type="text" placeholder="Descripción">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarUbicacion()">Guardar</button>
+                <button onclick="cerrarModal('modal-add-ubi')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-crear-usuario" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <h3>Nuevo Usuario</h3>
+            <label>RUT:</label> <input id="user-rut" type="number">
+            <label>DV:</label> <input id="user-dv" type="text" maxlength="1" style="width: 50px;">
+            <label>Nombre:</label> <input id="user-pnombre" type="text">
+            <label>Apellido:</label> <input id="user-apPaterno" type="text">
+            <label>Email:</label> <input id="user-email" type="email">
+            <label>Rol:</label> 
+            <select id="user-rol">
+                <option value="1">Administrador</option>
+                <option value="2">Pañolero</option>
+                <option value="3">Docente</option>
+                <option value="4">Alumno</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="guardarUsuario()">Crear</button>
+                <button onclick="cerrarModal('modal-crear-usuario')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-nuevo-prestamo" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <h3>Registrar Préstamo</h3>
+            <label>RUT Usuario:</label> <input id="prestamo-rut" type="number">
+            <label>Motivo:</label> <input id="prestamo-motivo" type="text">
+            <label>Prioridad:</label>
+            <select id="prestamo-prioridad">
+                <option value="Baja">Baja</option>
+                <option value="Media" selected>Media</option>
+                <option value="Alta">Alta</option>
+            </select>
+            <hr>
+            <h4>Productos</h4>
+            <div class="input-row">
+                <select id="prestamo-prod-select" style="flex:2"></select>
+                <input id="prestamo-prod-cant" type="number" value="1" min="1" style="width:60px">
+                <button class="btn-primary" onclick="agregarProductoALista()">+</button>
+            </div>
+            <div id="lista-productos-prestamo" class="product-list-container"></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="confirmarPrestamo()">Registrar</button>
+                <button onclick="cerrarModal('modal-nuevo-prestamo')">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="assets/js/app.js"></script>
 </body>
