@@ -65,32 +65,52 @@ async function cargarDashboard() {
 // ==========================================
 async function cargarInventario() {
     const tbody = document.querySelector('#tabla-inventario tbody');
-    tbody.innerHTML = '<tr><td colspan="7">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">Cargando inventario...</td></tr>';
 
     try {
         const res = await fetch(API_INVENTARIO);
-        if(!res.ok) throw new Error("Error API Inventario");
+        if(!res.ok) throw new Error("Error al consultar API Inventario");
         const data = await res.json();
 
-        console.log("Datos Inventario:", data); // DEBUG
+        console.log("Datos recibidos:", data); // Para depuración
 
         tbody.innerHTML = '';
         data.forEach(item => {
-            // Lógica robusta para encontrar el nombre de la ubicación
-            // 1. Intenta item.nombre_ubicacion (si el backend lo aplana)
-            // 2. Intenta item.ubicacion.nombre (si el backend devuelve objeto anidado)
-            let nombreUbi = item.nombre_ubicacion || '-';
-            if (nombreUbi === '-' && item.ubicacion) {
-                 nombreUbi = item.ubicacion.nombre || item.ubicacion.nombre_sala || item.ubicacion.nombreSala || '-';
+            // =========================================================
+            // LÓGICA ROBUSTA PARA LA UBICACIÓN (A prueba de fallos)
+            // =========================================================
+            let nombreUbi = 'Sin Ubicación';
+
+            // 1. Si el backend ya manda el texto listo (Backend actualizado)
+            if (item.ubicacion && typeof item.ubicacion === 'string') {
+                nombreUbi = item.ubicacion;
+            } 
+            // 2. Si el backend manda un objeto (Backend antiguo o mapeo completo)
+            else if (item.ubicacion && typeof item.ubicacion === 'object') {
+                const sala = item.ubicacion.nombre_sala || item.ubicacion.nombre || item.ubicacion.nombreSala || 'Sala ?';
+                const estante = item.ubicacion.estante ? ` - ${item.ubicacion.estante}` : '';
+                nombreUbi = sala + estante;
+            }
+            // 3. Si viene aplanado en otro campo (Fallback)
+            else if (item.nombre_ubicacion) {
+                nombreUbi = item.nombre_ubicacion;
             }
 
+            // =========================================================
+            // RENDERIZADO DE LA FILA
+            // =========================================================
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${item.codigo}</td>
-                <td>${item.nombre}</td> <td>${item.categoria}</td>
-                <td>${item.marca}</td>     <td>${item.ubicacion}</td> <td>${item.stock_total}</td>
+                <td>${item.codigo || item.cod_interno || 'S/N'}</td>
+                <td>${item.nombre || item.nombre_producto}</td>
+                <td>${item.categoria || (item.categoria_prod ? item.categoria_prod.nombre : '-')}</td>
+                <td>${item.marca || (item.marca_prod ? item.marca_prod.nombre : '-')}</td>
+                
+                <td>${nombreUbi}</td> 
+                
+                <td>${item.stock_total || item.stock || 0}</td>
                 <td>
-                    <button class="btn-mini" onclick="verCodigoBarras('${item.cod_interno}')" title="Ver Código">🔍 ID</button>
+                    <button class="btn-mini" onclick="verCodigoBarras('${item.codigo || item.cod_interno}')" title="Ver Código">🔍 ID</button>
                     <button class="btn-primary" onclick="prepararEdicion(${item.id})">Editar</button>
                     <button class="btn-secondary" onclick="eliminarProducto(${item.id})">Eliminar</button>
                 </td>
@@ -98,8 +118,8 @@ async function cargarInventario() {
             tbody.appendChild(tr);
         });
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="7">Error al conectar con Inventario</td></tr>';
-        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color:red">Error de conexión con el servidor (Puerto 8081)</td></tr>';
+        console.error("Error detallado:", err);
     }
 }
 
@@ -148,31 +168,28 @@ async function cargarCombosProducto(idCat, idMarca, idUbi) {
         const dataMarca = await resMarca.json();
         const dataUbi = await resUbi.json();
 
-        // DEBUG: Mira la consola del navegador (F12) para ver qué nombres llegan realmente
-        console.log("Categorías:", dataCat); 
-        console.log("Marcas:", dataMarca);
-        console.log("Ubicaciones:", dataUbi);
+        console.log("Categorías cargadas:", dataCat);
+        console.log("Marcas cargadas:", dataMarca);
 
-        // Llenamos Categorías y Marcas (asumiendo campo "nombre")
-        llenarSelect(idCat, dataCat, "id_categoria", "nombre");
-        llenarSelect(idMarca, dataMarca, "id_marca", "nombre");
+        // CORRECCIÓN AQUÍ:
+        // El backend devuelve objetos tipo { "id": 1, "nombre": "Herramienta" }
+        // Antes usábamos "id_categoria" y "id_marca", lo cual daba undefined.
+        
+        llenarSelect(idCat, dataCat, "id", "nombre");     // Usar "id", no "id_categoria"
+        llenarSelect(idMarca, dataMarca, "id", "nombre"); // Usar "id", no "id_marca"
 
-        // Lógica inteligente para Ubicación: busca el campo de nombre correcto
-        let labelUbi = "nombre"; // Por defecto
+        // Para Ubicación, usamos lógica para detectar el nombre correcto
+        let labelUbi = "nombre";
         if (dataUbi.length > 0) {
-            if (dataUbi[0].nombre_sala) labelUbi = "nombre_sala";
-            else if (dataUbi[0].nombreSala) labelUbi = "nombreSala";
-            else if (dataUbi[0].sala) labelUbi = "sala";
+            if (dataUbi[0].nombreSala) labelUbi = "nombreSala";
+            else if (dataUbi[0].nombre_sala) labelUbi = "nombre_sala";
         }
-        
-        // Usar "id_ubicacion" o "id" según lo que llegue
-        const idField = (dataUbi.length > 0 && dataUbi[0].id_ubicacion) ? "id_ubicacion" : "id";
-        
-        llenarSelect(idUbi, dataUbi, idField, labelUbi);
+        // Usar "id" también para ubicación
+        llenarSelect(idUbi, dataUbi, "id", labelUbi); 
 
     } catch (e) {
         console.error("Error cargando combos:", e);
-        alert("Error cargando listas desplegables. Revisa la consola.");
+        alert("Error cargando listas. Revisa la consola.");
     }
 }
 
@@ -189,23 +206,64 @@ function llenarSelect(idHtml, data, idField, labelField) {
 }
 
 async function guardarProducto() {
-    const data = {
-        cod_interno: parseInt(document.getElementById('prod-codigo').value),
-        nombre_producto: document.getElementById('prod-nombre').value,
-        categoria: parseInt(document.getElementById('prod-cat').value),
-        marca: parseInt(document.getElementById('prod-marca').value),
-        ubicacion: parseInt(document.getElementById('prod-ubi').value),
-        cantidad: parseInt(document.getElementById('prod-stock').value)
-    };
-    if(!data.cod_interno || !data.nombre_producto || !data.categoria) return alert("Complete campos.");
+    // 1. OBTENCIÓN DE ELEMENTOS
+    const inputCodigo = document.getElementById('prod-codigo'); 
+    const inputNombre = document.getElementById('prod-nombre');
+    const selectCat   = document.getElementById('prod-cat');
+    const selectMarca = document.getElementById('prod-marca');
+    const inputStock  = document.getElementById('prod-stock');
+    const selectUbi   = document.getElementById('prod-ubi');
 
-    await fetch(API_INVENTARIO, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    cerrarModal('modal-crear-producto');
-    cargarInventario();
+    // 2. EXTRACCIÓN DE VALORES
+    const cod_interno     = inputCodigo ? inputCodigo.value.trim() : '';
+    const nombre_producto = inputNombre ? inputNombre.value.trim() : '';
+    const categoria       = selectCat   ? selectCat.value : '';
+    const marca           = selectMarca ? selectMarca.value : '';
+    const cantidad        = inputStock  ? parseInt(inputStock.value) : 0;
+    const ubicacion       = selectUbi   ? selectUbi.value : '';
+
+    // 3. VALIDACIÓN
+    if (!cod_interno || !nombre_producto || !categoria || !marca || !ubicacion) {
+        alert('Complete todos los campos obligatorios.');
+        return;
+    }
+
+    const data = {
+        cod_interno: parseInt(cod_interno),
+        nombre_producto: nombre_producto,
+        categoria: parseInt(categoria),
+        marca: parseInt(marca),
+        cantidad: cantidad,
+        ubicacion: parseInt(ubicacion)
+    };
+
+    try {
+        // CORRECCIÓN AQUÍ: Usamos API_INVENTARIO en lugar de API_BASE_URL/inventario
+        // API_INVENTARIO ya incluye 'http://localhost:8081/api/inventario'
+        const res = await fetch(API_INVENTARIO, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            alert("Producto guardado exitosamente");
+            cerrarModal('modal-crear-producto');
+            
+            // Limpiar formulario
+            if(inputCodigo) inputCodigo.value = '';
+            if(inputNombre) inputNombre.value = '';
+            if(inputStock) inputStock.value = '0';
+            
+            cargarInventario();
+        } else {
+            const errorTxt = await res.text();
+            alert("Error al guardar: " + errorTxt);
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión con el servidor (Puerto 8081).");
+    }
 }
 
 async function prepararEdicion(id) {
