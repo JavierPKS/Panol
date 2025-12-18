@@ -24,9 +24,6 @@ import org.springframework.hateoas.RepresentationModel;
 @EqualsAndHashCode(callSuper = false)
 public class CategoriaRequestDTO extends RepresentationModel<CategoriaRequestDTO> {
 
-    /**
-     * Nombre descriptivo de la categoría. Es obligatorio y no puede ser vacío.
-     */
     @NotBlank(message = "El nombre de la categoría es obligatorio")
     private String nombre;
 }

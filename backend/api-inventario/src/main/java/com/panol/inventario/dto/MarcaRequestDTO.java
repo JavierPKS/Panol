@@ -18,9 +18,6 @@ import org.springframework.hateoas.RepresentationModel;
 @EqualsAndHashCode(callSuper = false)
 public class MarcaRequestDTO extends RepresentationModel<MarcaRequestDTO> {
 
-    /**
-     * Nombre de la marca. Debe estar presente.
-     */
     @NotBlank(message = "El nombre de la marca es obligatorio")
     private String nombre;
 }
