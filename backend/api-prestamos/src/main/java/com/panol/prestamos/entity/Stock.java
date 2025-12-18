@@ -17,6 +17,7 @@ public class Stock {
     @Column(name = "id_stock")
     private Integer id;
 
-    @Column(name = "cantidad")
+    private Integer stockMinimo;
+    private Integer stockMaximo;
     private Integer cantidad;
 }
