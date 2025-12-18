@@ -119,11 +119,11 @@ Abre una terminal en la carpeta de cada microservicio y ejecuta:
 
 | Servicio | Puerto Configurado |
 | :--- | :--- |
+| API Inventario | 8081 |
 | API Préstamos | 8082 |
 | API Solicitudes | 8083 |
+| API Usuarios | 8084 |
 | API Historial | 8085 |
-| API Inventario | 8080 (Por defecto) |
-| API Usuarios | 8080 (Por defecto - verificar conflicto) |
 
 ### 3\. Frontend
 
