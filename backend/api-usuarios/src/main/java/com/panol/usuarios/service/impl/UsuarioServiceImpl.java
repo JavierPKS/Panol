@@ -58,7 +58,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .apPaterno(dto.getApPaterno())
                 .apMaterno(dto.getApMaterno())
                 .email(dto.getEmail())
-                .actividad("1") // Por defecto activo al crear
+                .actividad("1") // por defecto activo al crear
                 .rol(rol)
                 .build();
 
@@ -72,12 +72,12 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Actualizamos campos permitidos
-        if(dto.getPnombre() != null) u.setPnombre(dto.getPnombre());
-        if(dto.getSnombre() != null) u.setSnombre(dto.getSnombre());
-        if(dto.getApPaterno() != null) u.setApPaterno(dto.getApPaterno());
-        if(dto.getApMaterno() != null) u.setApMaterno(dto.getApMaterno());
-        if(dto.getEmail() != null) u.setEmail(dto.getEmail());
-        if(dto.getActividad() != null) u.setActividad(dto.getActividad());
+        if (dto.getPnombre() != null) u.setPnombre(dto.getPnombre());
+        if (dto.getSnombre() != null) u.setSnombre(dto.getSnombre());
+        if (dto.getApPaterno() != null) u.setApPaterno(dto.getApPaterno());
+        if (dto.getApMaterno() != null) u.setApMaterno(dto.getApMaterno());
+        if (dto.getEmail() != null) u.setEmail(dto.getEmail());
+        if (dto.getActividad() != null) u.setActividad(dto.getActividad());
 
         if (dto.getIdRol() != null) {
             Rol nuevoRol = rolRepo.findById(dto.getIdRol())

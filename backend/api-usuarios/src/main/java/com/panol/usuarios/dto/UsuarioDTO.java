@@ -1,13 +1,18 @@
 package com.panol.usuarios.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UsuarioDTO {
+@EqualsAndHashCode(callSuper = false)
+public class UsuarioDTO extends RepresentationModel<UsuarioDTO> {
     private Integer rut;
     private String dvRut;
     private String pnombre;
@@ -15,7 +20,7 @@ public class UsuarioDTO {
     private String apPaterno;
     private String apMaterno;
     private String email;
-    private String idRol;     
-    private String nombreRol; 
+    private String idRol;
+    private String nombreRol;
     private String actividad;
 }
