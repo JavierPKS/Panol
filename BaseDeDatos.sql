@@ -1,3 +1,12 @@
+CREATE DATABASE IF NOT EXISTS bdpanol
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_general_ci;
+
+USE bdpanol;
+
+/* =========================
+CREACIÓN DE TABLAS
+========================= */
 -- 1. ROL
 CREATE TABLE ROL (
     id_rol CHAR(1) NOT NULL,
