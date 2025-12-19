@@ -8,15 +8,24 @@ const API_USUARIOS    = 'http://localhost:8084/api/usuarios';
 const API_HISTORIAL   = 'http://localhost:8085/api/historial';
 const API_BARCODE     = 'http://localhost:8086/api/barcodes';
 
+// Definición de Roles del Sistema (Debe coincidir con BD: CHAR(1))
+const ROLES_SISTEMA = [
+    { id: 'A', nombre: 'Administrador' },
+    { id: 'P', nombre: 'Pañolero' },
+    { id: 'D', nombre: 'Docente' }
+    // { id: '4', nombre: 'Alumno' } // Descomentar si agregas Alumno a la tabla ROL en BD
+];
+
 // Estado local
 let productosPrestamoTemp = [];
-let solicitudesCache = []; // Caché para no volver a pedir al server al abrir modal
+let solicitudesCache = [];
 
 // ==========================================
 // INICIALIZACIÓN
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     cargarDashboard();
+    poblarSelectRoles(); // Cargar opciones correctas en el select de usuarios
 });
 
 // Manejo de pestañas
@@ -42,6 +51,19 @@ if(btnNuevo) {
     btnNuevo.addEventListener('click', async () => {
         await cargarCombosProducto('prod-cat', 'prod-marca', 'prod-ubi');
         abrirModal('modal-crear-producto');
+    });
+}
+
+// Poblar el select de roles en el modal de usuario para evitar errores de ID
+function poblarSelectRoles() {
+    const select = document.getElementById('user-rol');
+    if (!select) return;
+    select.innerHTML = '<option value="">Seleccione Rol...</option>';
+    ROLES_SISTEMA.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id; // IMPORTANTE: Valor 'A', 'P' o 'D'
+        opt.textContent = r.nombre;
+        select.appendChild(opt);
     });
 }
 
@@ -163,6 +185,7 @@ async function guardarProducto() {
         alert("Producto creado correctamente");
         cerrarModal('modal-crear-producto');
         cargarInventario();
+        // Limpiar
         document.getElementById('prod-codigo').value = '';
         document.getElementById('prod-nombre').value = '';
         document.getElementById('prod-stock').value = '0';
@@ -182,13 +205,8 @@ async function prepararEdicion(id) {
     document.getElementById('edit-stock').value = stockVal;
     
     if(data.categoria_id) document.getElementById('edit-cat').value = data.categoria_id;
-    else if(data.categoria) document.getElementById('edit-cat').value = data.categoria;
-
     if(data.marca_id) document.getElementById('edit-marca').value = data.marca_id;
-    else if(data.marca) document.getElementById('edit-marca').value = data.marca;
-
     if(data.ubicacion_id) document.getElementById('edit-ubi').value = data.ubicacion_id;
-    else if(data.ubicacion) document.getElementById('edit-ubi').value = data.ubicacion;
 
     abrirModal('modal-editar-producto');
 }
@@ -284,7 +302,6 @@ async function cargarSolicitudes() {
         solicitudesCache = data._embedded ? data._embedded.solicitudResponseDTOList : (Array.isArray(data) ? data : []);
         
         tbody.innerHTML = '';
-        // Filtrar solo las pendientes
         const pendientes = solicitudesCache.filter(s => s.estado === 'pendiente');
 
         if(pendientes.length === 0) {
@@ -311,30 +328,24 @@ async function cargarSolicitudes() {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="6">Error de conexión</td></tr>'; }
 }
 
-// --- NUEVA FUNCIÓN: VER DETALLE Y CRUZAR CON INVENTARIO ---
 async function verDetalleSolicitud(id) {
     const solicitud = solicitudesCache.find(s => s.id === id);
     if (!solicitud) return;
 
-    // 1. Llenar cabecera del modal
     document.getElementById('det-sol-id').textContent = solicitud.id;
     document.getElementById('det-sol-rut').textContent = solicitud.rut;
     document.getElementById('det-sol-prio').textContent = solicitud.prioridad;
     document.getElementById('det-sol-motivo').textContent = solicitud.motivo;
 
-    // Configurar botones de acción del modal
     document.getElementById('btn-aprobar-modal').onclick = () => cambiarEstadoSol(id, 'APROBADA');
     document.getElementById('btn-rechazar-modal').onclick = () => cambiarEstadoSol(id, 'RECHAZADA');
 
-    // 2. Limpiar tabla y mostrar loading
     const tbody = document.querySelector('#tabla-detalle-items tbody');
     tbody.innerHTML = '';
     document.getElementById('detalle-loading').classList.remove('hidden');
     abrirModal('modal-detalle-solicitud');
 
-    // 3. Obtener detalles de productos (Composition)
     try {
-        // Creamos una lista de promesas para buscar info de cada producto en API INVENTARIO
         const promesas = solicitud.detalles.map(async (detalle) => {
             try {
                 const respProd = await fetch(`${API_INVENTARIO}/${detalle.idProducto}`);
@@ -342,40 +353,35 @@ async function verDetalleSolicitud(id) {
                 const prodData = await respProd.json();
                 return { ...detalle, prodInfo: prodData };
             } catch (e) {
-                return { ...detalle, prodInfo: null }; // Si falla, mostramos fallback
+                return { ...detalle, prodInfo: null };
             }
         });
 
         const detallesCompletos = await Promise.all(promesas);
 
-        // 4. Renderizar tabla
         detallesCompletos.forEach(d => {
             const prod = d.prodInfo;
-            const nombreProd = prod ? (prod.nombre_producto || prod.nombre) : `ID ${d.idProducto} (No encontrado)`;
+            const nombreProd = prod ? (prod.nombre_producto || prod.nombre) : `ID ${d.idProducto}`;
             const stockActual = prod ? (prod.stock_total !== undefined ? prod.stock_total : prod.stock) : '?';
             const ubicacion = prod ? obtenerTextoUbicacion(prod.ubicacion) : '-';
             
-            // Alerta visual si stock insuficiente
             const alertaStock = (typeof stockActual === 'number' && stockActual < d.cantidad) 
                                 ? '<span style="color:red; font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> Insuficiente</span>' 
                                 : '<span style="color:green">OK</span>';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
-                    <b>${nombreProd}</b><br>
-                    <small class="text-muted">ID: ${d.idProducto}</small>
-                </td>
+                <td><b>${nombreProd}</b></td>
                 <td>${ubicacion}</td>
                 <td class="text-center font-bold">${d.cantidad}</td>
                 <td class="text-center">${stockActual} (${alertaStock})</td>
-                <td><small>Desde: ${d.fechaInicio}<br>Hasta: ${d.fechaRetorno}</small></td>
+                <td><small>${d.fechaInicio} / ${d.fechaRetorno}</small></td>
             `;
             tbody.appendChild(tr);
         });
 
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="5">Error cargando detalles del inventario.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">Error cargando detalles.</td></tr>';
     } finally {
         document.getElementById('detalle-loading').classList.add('hidden');
     }
@@ -385,8 +391,8 @@ async function cambiarEstadoSol(id, estado) {
     if(!confirm(`¿Confirma marcar la solicitud como ${estado}?`)) return;
     await fetchSimple(`${API_SOLICITUDES}/${id}/estado`, 'PUT', {estado}, () => {
         cerrarModal('modal-detalle-solicitud');
-        cargarSolicitudes(); // Recargar tabla principal
-        alert(`Solicitud ${estado} correctamente.`);
+        cargarSolicitudes();
+        alert(`Solicitud ${estado}.`);
     });
 }
 
@@ -485,14 +491,18 @@ async function devolverPrestamo(id) {
 // ==========================================
 async function cargarUsuarios() {
     const tbody = document.querySelector('#tabla-usuarios tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
+    
     try {
         const res = await fetch(API_USUARIOS);
         const data = await res.json();
         const lista = data._embedded ? data._embedded.usuarioDTOList : [];
+        
         tbody.innerHTML = '';
         lista.forEach(u => {
-            const roles = {1:'Admin', 2:'Pañolero', 3:'Docente', 4:'Alumno'};
-            const rolNombre = u.nombreRol || roles[u.idRol] || u.idRol;
+            // Mapeo seguro usando el ID del rol ('A' -> 'Administrador')
+            const rolObj = ROLES_SISTEMA.find(r => r.id === u.idRol);
+            const rolNombre = rolObj ? rolObj.nombre : (u.nombreRol || u.idRol);
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -504,21 +514,36 @@ async function cargarUsuarios() {
             `;
             tbody.appendChild(tr);
         });
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="5">Error usuarios</td></tr>'; }
 }
 
 async function guardarUsuario() {
+    // FIX: Obtener el valor DIRECTO (String) del select, NO usar parseInt
+    const rolSeleccionado = document.getElementById('user-rol').value;
+
+    if(!rolSeleccionado) {
+        alert("Seleccione un rol");
+        return;
+    }
+
     const data = {
         rut: parseInt(document.getElementById('user-rut').value),
         dvRut: document.getElementById('user-dv').value,
         pnombre: document.getElementById('user-pnombre').value,
+        snombre: document.getElementById('user-snombre') ? document.getElementById('user-snombre').value : "",
         apPaterno: document.getElementById('user-apPaterno').value,
+        apMaterno: document.getElementById('user-apMaterno') ? document.getElementById('user-apMaterno').value : "",
         email: document.getElementById('user-email').value,
-        idRol: parseInt(document.getElementById('user-rol').value)
+        idRol: rolSeleccionado // Envia 'A', 'P' o 'D'
     };
+    
     await fetchSimple(API_USUARIOS, 'POST', data, () => {
+        alert("Usuario creado correctamente");
         cerrarModal('modal-crear-usuario');
         cargarUsuarios();
+        // Limpiar formulario
+        document.getElementById('user-rut').value = '';
+        document.getElementById('user-email').value = '';
     });
 }
 
@@ -605,7 +630,10 @@ async function cargarHistorial() {
 // ==========================================
 function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
-function abrirModalUsuario() { abrirModal('modal-crear-usuario'); }
+function abrirModalUsuario() { 
+    poblarSelectRoles(); // Asegurar que el combo tenga los roles correctos
+    abrirModal('modal-crear-usuario'); 
+}
 
 function llenarSelect(id, data, valField, labelField) {
     const sel = document.getElementById(id);
@@ -629,7 +657,13 @@ async function fetchSimple(url, method, body, onSuccess) {
             onSuccess();
         } else {
             const txt = await res.text();
-            alert("Error del servidor: " + txt);
+            // Intenta parsear el error JSON del backend si existe
+            try {
+                const jsonError = JSON.parse(txt);
+                alert("Error: " + (jsonError.message || jsonError.error));
+            } catch(e) {
+                alert("Error del servidor: " + txt);
+            }
         }
     } catch(e) {
         alert("Error de conexión: " + e.message);
