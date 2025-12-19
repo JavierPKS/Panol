@@ -332,19 +332,67 @@ async function verDetalleSolicitud(id) {
     const solicitud = solicitudesCache.find(s => s.id === id);
     if (!solicitud) return;
 
-    document.getElementById('det-sol-id').textContent = solicitud.id;
-    document.getElementById('det-sol-rut').textContent = solicitud.rut;
-    document.getElementById('det-sol-prio').textContent = solicitud.prioridad;
-    document.getElementById('det-sol-motivo').textContent = solicitud.motivo;
+    // 1. Cargar datos básicos de la solicitud (Evitando errores nulos)
+    setTextIfExists('det-sol-id', solicitud.id);
+    setTextIfExists('det-user-rut', solicitud.rut); // Corregido: ID correcto del HTML
+    setTextIfExists('det-sol-prio', solicitud.prioridad);
+    setTextIfExists('det-sol-motivo', solicitud.motivo);
 
-    document.getElementById('btn-aprobar-modal').onclick = () => cambiarEstadoSol(id, 'APROBADA');
-    document.getElementById('btn-rechazar-modal').onclick = () => cambiarEstadoSol(id, 'RECHAZADA');
+    // 2. Resetear campos de usuario mientras cargan
+    setTextIfExists('det-user-nombre', 'Cargando...');
+    setTextIfExists('det-user-email', '...');
+    setTextIfExists('det-user-rol', '...');
 
+    // 3. Activar botones (Ahora sí funcionarán porque el código no se rompe antes)
+    const btnAprobar = document.getElementById('btn-aprobar-modal');
+    const btnRechazar = document.getElementById('btn-rechazar-modal');
+
+    if (btnAprobar) {
+        btnAprobar.onclick = () => cambiarEstadoSol(id, 'aprobado'); 
+        // Deshabilitar si no está pendiente
+        btnAprobar.disabled = (solicitud.estado !== 'pendiente');
+    }
+    
+    if (btnRechazar) {
+        btnRechazar.onclick = () => cambiarEstadoSol(id, 'rechazado');
+        btnRechazar.disabled = (solicitud.estado !== 'pendiente');
+    }
+
+    // 4. Abrir Modal y preparar tabla
     const tbody = document.querySelector('#tabla-detalle-items tbody');
-    tbody.innerHTML = '';
-    document.getElementById('detalle-loading').classList.remove('hidden');
+    if (tbody) tbody.innerHTML = '';
+    const loading = document.getElementById('detalle-loading');
+    if (loading) loading.classList.remove('hidden');
+
     abrirModal('modal-detalle-solicitud');
 
+    // 5. OBTENER DATOS DEL USUARIO (Nueva funcionalidad)
+    // Esto busca el nombre y rol usando el RUT que viene en la solicitud
+    if (solicitud.rut) {
+        try {
+            const resUser = await fetch(`${API_USUARIOS}/${solicitud.rut}`);
+            if (resUser.ok) {
+                const user = await resUser.json();
+                
+                // Formatear nombre
+                const nombreCompleto = `${user.pnombre} ${user.apPaterno}`;
+                setTextIfExists('det-user-nombre', nombreCompleto);
+                setTextIfExists('det-user-email', user.email);
+
+                // Mapear el Rol (A -> Administrador, etc.)
+                const rolObj = ROLES_SISTEMA.find(r => r.id === user.idRol);
+                const nombreRol = rolObj ? rolObj.nombre : (user.nombreRol || user.idRol);
+                setTextIfExists('det-user-rol', nombreRol);
+            } else {
+                setTextIfExists('det-user-nombre', 'Usuario no encontrado en BD');
+            }
+        } catch (e) {
+            console.error("Error cargando usuario:", e);
+            setTextIfExists('det-user-nombre', 'Error de conexión (API Usuarios)');
+        }
+    }
+
+    // 6. Cargar detalles de los productos (Lógica original mejorada)
     try {
         const promesas = solicitud.detalles.map(async (detalle) => {
             try {
@@ -365,6 +413,7 @@ async function verDetalleSolicitud(id) {
             const stockActual = prod ? (prod.stock_total !== undefined ? prod.stock_total : prod.stock) : '?';
             const ubicacion = prod ? obtenerTextoUbicacion(prod.ubicacion) : '-';
             
+            // Lógica visual para stock
             const alertaStock = (typeof stockActual === 'number' && stockActual < d.cantidad) 
                                 ? '<span style="color:red; font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> Insuficiente</span>' 
                                 : '<span style="color:green">OK</span>';
@@ -375,24 +424,34 @@ async function verDetalleSolicitud(id) {
                 <td>${ubicacion}</td>
                 <td class="text-center font-bold">${d.cantidad}</td>
                 <td class="text-center">${stockActual} (${alertaStock})</td>
-                <td><small>${d.fechaInicio} / ${d.fechaRetorno}</small></td>
+                <td><small>${d.fechaInicio || '-'} / ${d.fechaRetorno || '-'}</small></td>
             `;
-            tbody.appendChild(tr);
+            if (tbody) tbody.appendChild(tr);
         });
 
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="5">Error cargando detalles.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5">Error cargando detalles.</td></tr>';
     } finally {
-        document.getElementById('detalle-loading').classList.add('hidden');
+        if (loading) loading.classList.add('hidden');
+    }
+}
+
+// Función auxiliar para evitar errores si el HTML cambia
+function setTextIfExists(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text;
     }
 }
 
 async function cambiarEstadoSol(id, estado) {
     if(!confirm(`¿Confirma marcar la solicitud como ${estado}?`)) return;
+    
+    // Llamada a la API para actualizar el estado
     await fetchSimple(`${API_SOLICITUDES}/${id}/estado`, 'PUT', {estado}, () => {
-        cerrarModal('modal-detalle-solicitud');
-        cargarSolicitudes();
-        alert(`Solicitud ${estado}.`);
+        cerrarModal('modal-detalle-solicitud'); // Cierra el modal
+        cargarSolicitudes(); // Recarga la lista de fondo
+        alert(`Solicitud ${estado} correctamente.`);
     });
 }
 
@@ -402,28 +461,53 @@ async function cambiarEstadoSol(id, estado) {
 async function cargarPrestamos() {
     const tbody = document.querySelector('#tabla-prestamos tbody');
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
+    
     try {
         const res = await fetch(API_PRESTAMOS);
+        if (!res.ok) throw new Error("Error fetching préstamos");
         const data = await res.json();
-        const lista = data._embedded ? data._embedded.solicitudPrestamoDTOList : [];
+        
+        // Obtener la lista cruda
+        const listaCompleta = data._embedded ? data._embedded.solicitudPrestamoDTOList : (Array.isArray(data) ? data : []);
+
+        // FILTRO CLAVE: Solo mostrar los que NO están devueltos
+        const listaActivos = listaCompleta.filter(p => p.estadoSolicitud !== 'Devuelto');
 
         tbody.innerHTML = '';
-        lista.forEach(p => {
+        
+        if(listaActivos.length === 0) {
+             tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay préstamos activos.</td></tr>';
+             return;
+        }
+
+        // Ordenar: Pendientes más recientes primero
+        listaActivos.sort((a, b) => b.idPrestamo - a.idPrestamo);
+
+        listaActivos.forEach(p => {
             const tr = document.createElement('tr');
+            
+            // Determinar color del badge
+            let badgeClass = 'badge-info';
+            if(p.estadoSolicitud === 'pendiente') badgeClass = 'badge-warning';
+            if(p.estadoSolicitud === 'Atrasado') badgeClass = 'badge-danger';
+
             tr.innerHTML = `
-                <td>${p.idPrestamo}</td>
+                <td><b>${p.idPrestamo}</b></td>
                 <td>${p.usuarioRut}</td>
                 <td>${p.fechaSolicitud}</td>
-                <td>${p.estadoSolicitud}</td>
+                <td><span class="badge ${badgeClass}">${p.estadoSolicitud}</span></td>
                 <td>
-                    ${p.estadoSolicitud !== 'Devuelto' ? 
-                    `<button class="btn-mini" onclick="devolverPrestamo(${p.idPrestamo})">Devolver</button>` : 
-                    '<span style="color:green">Completado</span>'}
+                    <button class="btn-mini btn-primary" onclick="devolverPrestamo(${p.idPrestamo})">
+                        <i class="fa-solid fa-rotate-left"></i> Devolver
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-    } catch(e) { tbody.innerHTML = '<tr><td colspan="5">Error cargando préstamos</td></tr>'; }
+    } catch(e) { 
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="5" style="color:red">Error cargando préstamos (Puerto 8082)</td></tr>'; 
+    }
 }
 
 async function abrirModalPrestamo() {
@@ -437,12 +521,31 @@ async function abrirModalPrestamo() {
 
 function agregarProductoALista() {
     const select = document.getElementById('prestamo-prod-select');
+    const inputCant = document.getElementById('prestamo-prod-cant');
+    
     const id = select.value;
-    const nombre = select.options[select.selectedIndex].text;
-    const cant = parseInt(document.getElementById('prestamo-prod-cant').value);
+    const nombre = select.options[select.selectedIndex]?.text;
+    const cant = parseInt(inputCant.value);
 
-    if(!id) return;
-    productosPrestamoTemp.push({ productoIdPrincipal: parseInt(id), cantidad: cant, nombreDisplay: nombre });
+    // 1. Validaciones
+    if (!id || id === "") {
+        alert("⚠️ Debes seleccionar un producto válido.");
+        return;
+    }
+    if (isNaN(cant) || cant <= 0) {
+        alert("⚠️ La cantidad debe ser mayor a 0.");
+        return;
+    }
+
+    // 2. Agregar a la lista temporal
+    productosPrestamoTemp.push({ 
+        productoIdPrincipal: parseInt(id), 
+        cantidad: cant, 
+        nombreDisplay: nombre 
+    });
+
+    // 3. Limpiar campo de cantidad y refrescar vista
+    inputCant.value = "1"; 
     actualizarListaProductosModal();
 }
 
@@ -463,27 +566,78 @@ function actualizarListaProductosModal() {
 }
 
 async function confirmarPrestamo() {
+    const rutInput = document.getElementById('prestamo-rut');
+    const motivoInput = document.getElementById('prestamo-motivo');
+    const prioridadInput = document.getElementById('prestamo-prioridad');
+
+    const rut = parseInt(rutInput.value);
+    const motivo = motivoInput.value.trim();
+    const prioridad = prioridadInput.value;
+
+    // --- VALIDACIONES PREVIAS ---
+    
+    // 1. Validar RUT
+    if (!rut || isNaN(rut)) {
+        alert("⚠️ Por favor ingresa un RUT de usuario válido (sin dígito verificador).");
+        rutInput.focus();
+        return;
+    }
+
+    // 2. Validar Motivo
+    if (motivo.length < 3) {
+        alert("⚠️ Debes ingresar un motivo para el préstamo.");
+        motivoInput.focus();
+        return;
+    }
+
+    // 3. Validar que hay productos agregados
+    if (productosPrestamoTemp.length === 0) {
+        alert("⚠️ La lista de productos está vacía. Agrega al menos un ítem.");
+        return;
+    }
+
+    // --- PREPARAR ENVÍO ---
     const body = {
-        usuarioRut: parseInt(document.getElementById('prestamo-rut').value),
-        motivoPrestamo: document.getElementById('prestamo-motivo').value,
-        prioridad: document.getElementById('prestamo-prioridad').value,
+        usuarioRut: rut,
+        motivoPrestamo: motivo,
+        prioridad: prioridad,
         detalles: productosPrestamoTemp.map(p => ({
             productoIdPrincipal: p.productoIdPrincipal,
             cantidad: p.cantidad
         }))
     };
-    
+
+    // --- ENVIAR AL SERVIDOR ---
+    // Usamos fetchSimple para manejar errores automáticamente
     await fetchSimple(API_PRESTAMOS, 'POST', body, () => {
-        alert("Préstamo registrado!");
+        alert("✅ ¡Préstamo registrado exitosamente!");
         cerrarModal('modal-nuevo-prestamo');
+        
+        // Limpiar formulario completo
+        rutInput.value = '';
+        motivoInput.value = '';
+        productosPrestamoTemp = [];
+        actualizarListaProductosModal();
+        
+        // Recargar tabla
         cargarPrestamos();
     });
 }
 
 async function devolverPrestamo(id) {
-    if(confirm("¿Registrar devolución de todos los recursos?")) {
-        await fetchSimple(`${API_PRESTAMOS}/${id}/devolver`, 'PUT', null, cargarPrestamos);
-    }
+    if(!confirm("¿Confirmar la recepción de los recursos? El estado cambiará a DEVUELTO.")) return;
+
+    // Llamada directa al backend
+    await fetchSimple(`${API_PRESTAMOS}/${id}/devolver`, 'PUT', null, () => {
+        // Feedback visual inmediato
+        alert("Devolución registrada correctamente.");
+        
+        // Recargar la tabla para que el filtro oculte el préstamo devuelto
+        cargarPrestamos(); 
+        
+        // Actualizar los contadores del dashboard también
+        cargarDashboard();
+    });
 }
 
 // ==========================================
