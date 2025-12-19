@@ -32,4 +32,13 @@ public class HistorialRow extends RepresentationModel<HistorialRow> {
      * Fecha real de devolución del préstamo (puede ser nula si aún no se devuelve).
      */
     private LocalDate fechaDevolucionPrestamo;
+    /** Estado del movimiento (PRESTADO / DEVUELTO / ATRASADO) */
+    private String estado;
+
+    /** Texto descriptivo para mostrar en el frontend */
+    private String observacion;
+
+    /** Fecha que se mostrará en la tabla (inicio o devolución) */
+    private LocalDate fechaRegistro;
+
 }

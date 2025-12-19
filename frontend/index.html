@@ -138,24 +138,36 @@
 
         <section id="historial" class="vista">
             <div class="vista-header">
-                <h2>Historial de Movimientos</h2>
+                <h2>
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    Historial de Préstamos y Devoluciones
+                </h2>
+
                 <button class="btn-icon" onclick="cargarHistorial()" title="Actualizar">
                     <i class="fa-solid fa-sync"></i>
                 </button>
             </div>
+
             <div class="table-responsive">
                 <table class="tabla" id="tabla-historial">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Detalle / Observación</th>
-                            <th>Fecha Registro</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Estado</th>
+                            <th>Observación</th>
+                            <th>Fecha</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <!-- Se llena dinámicamente desde app.js -->
+                    </tbody>
                 </table>
             </div>
         </section>
+
+
 
         <section id="usuarios" class="vista">
             <div class="vista-header">

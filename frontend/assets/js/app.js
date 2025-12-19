@@ -530,18 +530,75 @@ async function eliminarUsuario(rut) {
 
 async function cargarHistorial() {
     const tbody = document.querySelector('#tabla-historial tbody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center">Cargando historial...</td>
+        </tr>
+    `;
+
     try {
         const res = await fetch(API_HISTORIAL);
+
+        if (!res.ok) {
+            throw new Error('Error en API Historial');
+        }
+
         const data = await res.json();
         const lista = data._embedded ? data._embedded.historialRowList : [];
+
         tbody.innerHTML = '';
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">
+                        No existen movimientos registrados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
         lista.forEach(h => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${h.idDetalle}</td><td>${h.observacion}</td><td>${h.fecha}</td>`;
+
+            tr.innerHTML = `
+                <td>${h.idDetalle}</td>
+                <td>${h.nombreProducto || '-'}</td>
+                <td>${h.cantidad}</td>
+                <td>
+                    <span style="
+                        font-weight: bold;
+                        color: ${
+                            h.estado === 'DEVUELTO'
+                                ? 'green'
+                                : h.estado === 'ATRASADO'
+                                ? 'red'
+                                : 'orange'
+                        };
+                    ">
+                        ${h.estado}
+                    </span>
+                </td>
+                <td>${h.observacion}</td>
+                <td>${h.fechaRegistro}</td>
+            `;
+
             tbody.appendChild(tr);
         });
-    } catch(e) { console.error(e); }
+
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center" style="color:red">
+                    Error al cargar historial (API Historial)
+                </td>
+            </tr>
+        `;
+    }
 }
+
 
 // ==========================================
 // UTILIDADES

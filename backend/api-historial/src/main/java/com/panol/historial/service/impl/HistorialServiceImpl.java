@@ -10,6 +10,7 @@ import com.panol.historial.service.HistorialService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -96,13 +97,37 @@ public class HistorialServiceImpl implements HistorialService {
 
     /** Convierte una entidad Historial en su DTO correspondiente. */
     private HistorialRow mapToDTO(Historial h) {
+        LocalDate hoy = LocalDate.now();
+
+        String estado;
+        String observacion;
+        LocalDate fechaRegistro;
+
+        if (h.getFechaDevolucionPrestamo() != null) {
+            estado = "DEVUELTO";
+            observacion = "Material devuelto correctamente";
+            fechaRegistro = h.getFechaDevolucionPrestamo();
+        } else if (h.getFechaRetornoPrestamo().isBefore(hoy)) {
+            estado = "ATRASADO";
+            observacion = "Préstamo vencido, pendiente de devolución";
+            fechaRegistro = h.getFechaRetornoPrestamo();
+        } else {
+            estado = "PRESTADO";
+            observacion = "Préstamo activo";
+            fechaRegistro = h.getFechaInicioPrestamo();
+        }
+
         return HistorialRow.builder()
                 .idDetalle(h.getIdDetalle())
-                .nombreProducto(h.getProducto() != null ? h.getProducto().getNombre() : "Producto Desconocido")
+                .nombreProducto(
+                        h.getProducto() != null ? h.getProducto().getNombre() : "Producto desconocido")
                 .cantidad(h.getCantidad())
                 .fechaInicioPrestamo(h.getFechaInicioPrestamo())
                 .fechaRetornoPrestamo(h.getFechaRetornoPrestamo())
                 .fechaDevolucionPrestamo(h.getFechaDevolucionPrestamo())
+                .estado(estado)
+                .observacion(observacion)
+                .fechaRegistro(fechaRegistro)
                 .build();
     }
 }
