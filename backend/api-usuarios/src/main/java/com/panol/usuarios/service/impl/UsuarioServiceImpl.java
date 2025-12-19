@@ -6,8 +6,10 @@ import com.panol.usuarios.entity.Usuario;
 import com.panol.usuarios.repository.RolRepository;
 import com.panol.usuarios.repository.UsuarioRepository;
 import com.panol.usuarios.service.UsuarioService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioDTO buscarPorRut(int rut) {
         Usuario u = usuarioRepo.findById(rut)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con RUT: " + rut));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con RUT: " + rut));
         return mapearADTO(u);
     }
 
@@ -41,14 +43,15 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioDTO crearUsuario(UsuarioDTO dto) {
         if (usuarioRepo.existsById(dto.getRut())) {
-            throw new RuntimeException("El RUT ya está registrado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El RUT ya está registrado");
         }
         if (usuarioRepo.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("El Email ya está registrado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El Email ya está registrado");
         }
 
+        // Validación crítica: Busca por el ID String ('A', 'P', 'D')
         Rol rol = rolRepo.findById(dto.getIdRol())
-                .orElseThrow(() -> new RuntimeException("El Rol especificado no existe"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El Rol especificado ('" + dto.getIdRol() + "') no existe. Use: A, P o D."));
 
         Usuario u = Usuario.builder()
                 .rut(dto.getRut())
@@ -58,7 +61,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .apPaterno(dto.getApPaterno())
                 .apMaterno(dto.getApMaterno())
                 .email(dto.getEmail())
-                .actividad("1") // por defecto activo al crear
+                .actividad("1") // Activo por defecto
                 .rol(rol)
                 .build();
 
@@ -69,9 +72,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioDTO editarUsuario(int rut, UsuarioDTO dto) {
         Usuario u = usuarioRepo.findById(rut)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        // Actualizamos campos permitidos
         if (dto.getPnombre() != null) u.setPnombre(dto.getPnombre());
         if (dto.getSnombre() != null) u.setSnombre(dto.getSnombre());
         if (dto.getApPaterno() != null) u.setApPaterno(dto.getApPaterno());
@@ -81,7 +83,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         if (dto.getIdRol() != null) {
             Rol nuevoRol = rolRepo.findById(dto.getIdRol())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol no encontrado: " + dto.getIdRol()));
             u.setRol(nuevoRol);
         }
 
@@ -92,12 +94,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public void eliminarUsuario(int rut) {
         if (!usuarioRepo.existsById(rut)) {
-            throw new RuntimeException("Usuario no encontrado para eliminar");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado para eliminar");
         }
         usuarioRepo.deleteById(rut);
     }
 
-    // Método auxiliar para convertir Entidad -> DTO
     private UsuarioDTO mapearADTO(Usuario u) {
         return UsuarioDTO.builder()
                 .rut(u.getRut())
@@ -108,7 +109,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .apMaterno(u.getApMaterno())
                 .email(u.getEmail())
                 .actividad(u.getActividad())
-                .idRol(u.getRol().getId())
+                .idRol(u.getRol().getId()) // Retorna 'A', 'P', 'D'
                 .nombreRol(u.getRol().getNombre())
                 .build();
     }

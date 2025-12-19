@@ -276,17 +276,26 @@
     <div id="modal-detalle-solicitud" class="modal hidden">
         <div class="modal-content modal-wide">
             <div class="modal-header">
-                <h3>Detalle de Solicitud #<span id="det-sol-id"></span></h3>
+                <h3>Revisión de Solicitud #<span id="det-sol-id"></span></h3>
                 <span class="close-modal" onclick="cerrarModal('modal-detalle-solicitud')">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="info-box">
-                    <p><strong>Solicitante (RUT):</strong> <span id="det-sol-rut"></span></p>
-                    <p><strong>Prioridad:</strong> <span id="det-sol-prio"></span></p>
-                    <p><strong>Motivo:</strong> <span id="det-sol-motivo"></span></p>
-                </div>
                 
-                <h4>Productos Solicitados</h4>
+                <div class="user-info-box" style="background-color: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #0056b3;">
+                    <h4 style="margin-top:0; color: #004494;"><i class="fa-solid fa-user-circle"></i> Datos del Solicitante</h4>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <p><strong>RUT:</strong> <span id="det-user-rut">Cargando...</span></p>
+                        <p><strong>Nombre:</strong> <span id="det-user-nombre">...</span></p>
+                        <p><strong>Email:</strong> <span id="det-user-email">...</span></p>
+                        <p><strong>Rol:</strong> <span id="det-user-rol">...</span></p>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span><strong>Prioridad:</strong> <span id="det-sol-prio"></span></span>
+                    <span><strong>Motivo:</strong> <span id="det-sol-motivo"></span></span>
+                </div>
+
                 <div class="table-responsive">
                     <table class="tabla" id="tabla-detalle-items">
                         <thead>
@@ -298,12 +307,11 @@
                                 <th>Fechas</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
                 <div id="detalle-loading" class="text-center hidden">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Verificando disponibilidad...
+                    <i class="fa-solid fa-spinner fa-spin"></i> Consultando disponibilidad...
                 </div>
             </div>
             <div class="modal-footer">
