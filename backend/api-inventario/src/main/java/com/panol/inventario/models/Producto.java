@@ -25,6 +25,13 @@ public class Producto {
     @Column(name = "estado", nullable = false)
     private String estado; // "1" Activo, "0" Eliminado
 
+    @Column(name = "ESTADO_id_estado", nullable = false)
+    private Integer estadoId;
+
+    @Column(name = "DISPONIBILIDAD_id_disp", nullable = false)
+    private Integer disponibilidadId;
+    // -----------------------------------------------
+
     // Relación con Inventario (que a su vez tiene Stock y Ubicación)
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "INVENTARIO_id_inventario", referencedColumnName = "id_inventario")

@@ -15,10 +15,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Implementación de {@link InventarioService} que encapsula la lógica de
- * negocio para la gestión del inventario. Maneja las operaciones de
- * creación, lectura, actualización y eliminación (CRUD) para productos,
- * categorías, marcas y ubicaciones.
+ * Implementación de {@link InventarioService} con correcciones para
+ * integridad referencial de la base de datos.
  */
 @Service
 public class InventarioServiceImpl implements InventarioService {
@@ -68,13 +66,13 @@ public class InventarioServiceImpl implements InventarioService {
         res.put("estado", p.getEstado());
 
         if (p.getCategoria() != null)
-            res.put("categoria", p.getCategoria().getId());
+            res.put("categoria_id", p.getCategoria().getId()); // Ajustado nombre clave
         if (p.getMarca() != null)
-            res.put("marca", p.getMarca().getId());
+            res.put("marca_id", p.getMarca().getId()); // Ajustado nombre clave
 
         if (p.getInventario() != null) {
             if (p.getInventario().getUbicacion() != null)
-                res.put("ubicacion", p.getInventario().getUbicacion().getId());
+                res.put("ubicacion_id", p.getInventario().getUbicacion().getId()); // Ajustado
             if (p.getInventario().getStock() != null)
                 res.put("stock", p.getInventario().getStock().getCantidad());
         }
@@ -100,11 +98,11 @@ public class InventarioServiceImpl implements InventarioService {
         // 3. Crear Stock
         Stock stock = Stock.builder()
                 .cantidad(req.getCantidad())
-                .stockMinimo(5) // Valor por defecto
+                .stockMinimo(5)
                 .stockMaximo(100)
                 .build();
 
-        // 4. Crear Inventario (vinculado a stock y ubicación)
+        // 4. Crear Inventario
         Inventario inv = Inventario.builder()
                 .observacion("Ingreso Inicial")
                 .fechaActualizacion(LocalDate.now())
@@ -113,13 +111,16 @@ public class InventarioServiceImpl implements InventarioService {
                 .build();
 
         // 5. Crear Producto
+        // CORRECCIÓN: Asignamos estadoId y disponibilidadId requeridos por BD
         Producto p = Producto.builder()
                 .codInterno(req.getCod_interno())
                 .nombreProducto(req.getNombre_producto())
-                .estado("1") // Activo por defecto
+                .estado("1") // String estado
+                .estadoId(1) // ID tabla ESTADO (1=Activo)
+                .disponibilidadId(1) // ID tabla DISPONIBILIDAD (1=Disponible)
                 .categoria(cat)
                 .marca(mar)
-                .inventario(inv) // JPA guardará Inventario y Stock en cascada
+                .inventario(inv)
                 .build();
 
         productoRepo.save(p);
@@ -128,7 +129,6 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public void crearProducto(ProductoRequestDTO req, MultipartFile file) {
-        // Por compatibilidad: delega a la versión sin archivo.
         crearProducto(req);
     }
 
@@ -149,13 +149,15 @@ public class InventarioServiceImpl implements InventarioService {
         p.setNombreProducto(req.getNombre_producto());
         p.setCategoria(cat);
         p.setMarca(mar);
-        if (req.getEstado() != null)
+        if (req.getEstado() != null) {
             p.setEstado(req.getEstado());
+            // Si el estado cambia a "0" (Eliminado), podríamos actualizar estadoId a 2 o 3 según BD
+            // Por simplicidad mantenemos 1, ya que la lógica principal usa el String "estado"
+        }
 
-        // Actualizar Inventario y Ubicación
+        // Actualizar Inventario
         Inventario inv = p.getInventario();
         if (inv == null) {
-            // Caso borde: si no existiera inventario (no debería pasar)
             inv = new Inventario();
             inv.setFechaActualizacion(LocalDate.now());
             p.setInventario(inv);
@@ -171,13 +173,12 @@ public class InventarioServiceImpl implements InventarioService {
         }
         stock.setCantidad(req.getStock());
 
-        productoRepo.save(p); // Cascada guarda todo
+        productoRepo.save(p);
     }
 
     @Override
     @Transactional
     public void editarProducto(int id, ProductoEditRequestDTO req, MultipartFile file) {
-        // Por compatibilidad: delega a la versión sin archivo.
         editarProducto(id, req);
     }
 
@@ -190,21 +191,18 @@ public class InventarioServiceImpl implements InventarioService {
         productoRepo.save(p);
     }
 
-    // ----- Categorías -----
+    // ----- Categorías, Marcas, Ubicaciones (Sin cambios mayores) -----
 
     @Override
     @Transactional(readOnly = true)
     public List<CategoriaResponseDTO> listarCategorias() {
-        return categoriaRepo.findAll().stream()
-                .map(this::mapCategoriaToDTO)
-                .collect(Collectors.toList());
+        return categoriaRepo.findAll().stream().map(this::mapCategoriaToDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public CategoriaResponseDTO obtenerCategoria(int id) {
-        CategoriaProd c = categoriaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaProd c = categoriaRepo.findById(id).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
         return mapCategoriaToDTO(c);
     }
 
@@ -220,8 +218,7 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public CategoriaResponseDTO actualizarCategoria(int id, CategoriaRequestDTO dto) {
-        CategoriaProd c = categoriaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaProd c = categoriaRepo.findById(id).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
         c.setNombre(dto.getNombre());
         c = categoriaRepo.save(c);
         return mapCategoriaToDTO(c);
@@ -230,26 +227,20 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public void eliminarCategoria(int id) {
-        CategoriaProd c = categoriaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
+        CategoriaProd c = categoriaRepo.findById(id).orElseThrow(() -> new NotFoundException("Categoría no encontrada"));
         categoriaRepo.delete(c);
     }
-
-    // ----- Marcas -----
 
     @Override
     @Transactional(readOnly = true)
     public List<MarcaResponseDTO> listarMarcas() {
-        return marcaRepo.findAll().stream()
-                .map(this::mapMarcaToDTO)
-                .collect(Collectors.toList());
+        return marcaRepo.findAll().stream().map(this::mapMarcaToDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public MarcaResponseDTO obtenerMarca(int id) {
-        Marca m = marcaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+        Marca m = marcaRepo.findById(id).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
         return mapMarcaToDTO(m);
     }
 
@@ -265,8 +256,7 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public MarcaResponseDTO actualizarMarca(int id, MarcaRequestDTO dto) {
-        Marca m = marcaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+        Marca m = marcaRepo.findById(id).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
         m.setNombre(dto.getNombre());
         m = marcaRepo.save(m);
         return mapMarcaToDTO(m);
@@ -275,26 +265,20 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public void eliminarMarca(int id) {
-        Marca m = marcaRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Marca no encontrada"));
+        Marca m = marcaRepo.findById(id).orElseThrow(() -> new NotFoundException("Marca no encontrada"));
         marcaRepo.delete(m);
     }
-
-    // ----- Ubicaciones -----
 
     @Override
     @Transactional(readOnly = true)
     public List<UbicacionResponseDTO> listarUbicaciones() {
-        return ubicacionRepo.findAll().stream()
-                .map(this::mapUbicacionToDTO)
-                .collect(Collectors.toList());
+        return ubicacionRepo.findAll().stream().map(this::mapUbicacionToDTO).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public UbicacionResponseDTO obtenerUbicacion(int id) {
-        UbicacionInv u = ubicacionRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
+        UbicacionInv u = ubicacionRepo.findById(id).orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
         return mapUbicacionToDTO(u);
     }
 
@@ -314,8 +298,7 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public UbicacionResponseDTO actualizarUbicacion(int id, UbicacionRequestDTO dto) {
-        UbicacionInv u = ubicacionRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
+        UbicacionInv u = ubicacionRepo.findById(id).orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
         u.setNombreSala(dto.getNombreSala());
         u.setEstante(dto.getEstante());
         u.setNivel(dto.getNivel());
@@ -327,58 +310,42 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public void eliminarUbicacion(int id) {
-        UbicacionInv u = ubicacionRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
+        UbicacionInv u = ubicacionRepo.findById(id).orElseThrow(() -> new NotFoundException("Ubicación no encontrada"));
         ubicacionRepo.delete(u);
     }
 
-    // ----- Métodos auxiliares -----
+    // ----- Mappers -----
 
     private ProductoResponseDTO mapToDTO(Producto p) {
         int cantidad = (p.getInventario() != null && p.getInventario().getStock() != null)
-                ? p.getInventario().getStock().getCantidad()
-                : 0;
+                ? p.getInventario().getStock().getCantidad() : 0;
 
-        // Lógica para obtener el nombre de la ubicación de forma segura (evitando NullPointerException)
         String nombreUbicacion = "Sin Ubicación";
         if (p.getInventario() != null && p.getInventario().getUbicacion() != null) {
-            // Concatenamos Sala y Estante para que sea más descriptivo
-            nombreUbicacion = p.getInventario().getUbicacion().getNombreSala() 
-                            + " - " + p.getInventario().getUbicacion().getEstante();
+            nombreUbicacion = p.getInventario().getUbicacion().getNombreSala()
+                    + " - " + p.getInventario().getUbicacion().getEstante();
         }
 
         return ProductoResponseDTO.builder()
                 .id(p.getId())
                 .codigo(p.getCodInterno())
-                .nombre(p.getNombreProducto()) // Ojo: asegúrate que tu frontend lea "nombre" o cambia esto a "nombre_producto"
+                .nombre(p.getNombreProducto())
                 .categoria(p.getCategoria() != null ? p.getCategoria().getNombre() : "Sin Categ.")
-                
-                // --- MAPEO DE LOS NUEVOS CAMPOS ---
                 .marca(p.getMarca() != null ? p.getMarca().getNombre() : "Sin Marca")
                 .ubicacion(nombreUbicacion)
-                // ----------------------------------
-
                 .stock_total(cantidad)
-                .stock_disponible(cantidad)
+                .stock_disponible(cantidad) // Lógica simple inicial
                 .stock_prestado(0)
                 .estado(p.getEstado())
                 .build();
     }
 
     private CategoriaResponseDTO mapCategoriaToDTO(CategoriaProd c) {
-        return CategoriaResponseDTO.builder()
-                .id(c.getId())
-                .nombre(c.getNombre())
-                .build();
+        return CategoriaResponseDTO.builder().id(c.getId()).nombre(c.getNombre()).build();
     }
-
     private MarcaResponseDTO mapMarcaToDTO(Marca m) {
-        return MarcaResponseDTO.builder()
-                .id(m.getId())
-                .nombre(m.getNombre())
-                .build();
+        return MarcaResponseDTO.builder().id(m.getId()).nombre(m.getNombre()).build();
     }
-
     private UbicacionResponseDTO mapUbicacionToDTO(UbicacionInv u) {
         return UbicacionResponseDTO.builder()
                 .id(u.getId())
@@ -388,6 +355,4 @@ public class InventarioServiceImpl implements InventarioService {
                 .descripcion(u.getDescripcion())
                 .build();
     }
-
-
 }

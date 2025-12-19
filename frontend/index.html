@@ -2,313 +2,414 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión de Pañol - Duoc UC</title>
     <link rel="stylesheet" href="assets/css/styles.css">
-    <style>
-        /* Estilos inline adicionales */
-        .product-list-container {
-            border: 1px solid #ccc;
-            padding: 10px;
-            max-height: 150px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        .product-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            padding: 5px;
-            background: #f9f9f9;
-        }
-        .remove-item {
-            color: red;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        /* Estilo para el código de barras */
-        #barcode-container img {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 4px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
 
     <header class="header">
         <div class="header-left">
+            <div class="logo-container">
+                <i class="fa-solid fa-boxes-stacked fa-2x"></i>
+            </div>
             <div>
-                <h1>Sistema de Gestión de Pañol</h1>
+                <h1>Gestión de Pañol</h1>
                 <p>Escuela de Informática y Telecomunicaciones</p>
             </div>
+        </div>
+        <div class="header-right">
+            <span id="user-display">Bienvenido, Admin</span>
         </div>
     </header>
 
     <nav class="navbar">
         <ul>
-            <li class="active" data-vista="inicio">Inicio</li>
-            <li data-vista="inventario">Inventario</li>
-            <li data-vista="solicitudes">Solicitudes</li>
-            <li data-vista="prestamos">Préstamos y Devoluciones</li>
-            <li data-vista="historial">Historial</li>
-            <li data-vista="usuarios">Usuarios</li>
+            <li class="active" data-vista="inicio"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
+            <li data-vista="inventario"><i class="fa-solid fa-box-open"></i> Inventario</li>
+            <li data-vista="solicitudes"><i class="fa-solid fa-clipboard-list"></i> Solicitudes</li>
+            <li data-vista="prestamos"><i class="fa-solid fa-hand-holding-hand"></i> Préstamos</li>
+            <li data-vista="historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</li>
+            <li data-vista="usuarios"><i class="fa-solid fa-users"></i> Usuarios</li>
         </ul>
     </nav>
 
     <main>
         <section id="inicio" class="vista visible">
-            <h2>Dashboard</h2>
+            <h2><i class="fa-solid fa-gauge-high"></i> Resumen del Pañol</h2>
             <div class="kpi-container">
-                <div class="kpi-card">
-                    Recursos Totales: <span id="kpi-total">Cargando...</span>
+                <div class="kpi-card blue">
+                    <h3>Recursos Totales</h3>
+                    <span id="kpi-total"><i class="fa-solid fa-spinner fa-spin"></i></span>
                 </div>
-                <div class="kpi-card">
-                    Disponibles: <span id="kpi-disponibles">Cargando...</span>
+                <div class="kpi-card green">
+                    <h3>Disponibles</h3>
+                    <span id="kpi-disponibles"><i class="fa-solid fa-spinner fa-spin"></i></span>
                 </div>
-                <div class="kpi-card">
-                    Prestados: <span id="kpi-prestados">Cargando...</span>
+                <div class="kpi-card orange">
+                    <h3>Prestados</h3>
+                    <span id="kpi-prestados"><i class="fa-solid fa-spinner fa-spin"></i></span>
                 </div>
+            </div>
+            <div class="welcome-banner">
+                <h3>Sistema Integrado de Gestión</h3>
+                <p>Seleccione una opción del menú para comenzar a administrar los recursos.</p>
             </div>
         </section>
 
         <section id="inventario" class="vista">
             <div class="vista-header">
-                <h2>Inventario</h2>
-                <button class="btn-primary" id="btn-nuevo-producto">Nuevo recurso</button>
+                <h2>Gestión de Inventario</h2>
+                <button class="btn-primary" id="btn-nuevo-producto">
+                    <i class="fa-solid fa-plus"></i> Nuevo Recurso
+                </button>
             </div>
-
-            <table class="tabla" id="tabla-inventario">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Marca</th>
-                        <th>Ubicación</th>
-                        <th>Stock</th>
-                        <th>Acciones</th> </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="tabla" id="tabla-inventario">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Marca</th>
+                            <th>Ubicación</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
 
         <section id="solicitudes" class="vista">
             <div class="vista-header">
                 <h2>Solicitudes Pendientes</h2>
-                <button class="btn-primary" onclick="cargarSolicitudes()">Actualizar</button>
+                <button class="btn-icon" onclick="cargarSolicitudes()" title="Actualizar">
+                    <i class="fa-solid fa-sync"></i>
+                </button>
             </div>
-            <table class="tabla" id="tabla-solicitudes">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>RUT Usuario</th>
-                        <th>Motivo</th>
-                        <th>Prioridad</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="tabla" id="tabla-solicitudes">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>RUT Solicitante</th>
+                            <th>Motivo</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
 
         <section id="prestamos" class="vista">
             <div class="vista-header">
                 <h2>Préstamos Activos</h2>
-                <button class="btn-primary" onclick="abrirModalPrestamo()">Registrar préstamo</button>
+                <div>
+                    <button class="btn-primary" onclick="abrirModalPrestamo()">
+                        <i class="fa-solid fa-file-signature"></i> Registrar Préstamo
+                    </button>
+                    <button class="btn-icon" onclick="cargarPrestamos()" title="Actualizar">
+                        <i class="fa-solid fa-sync"></i>
+                    </button>
+                </div>
             </div>
-            <table class="tabla" id="tabla-prestamos">
-                <thead>
-                    <tr>
-                        <th>ID Préstamo</th>
-                        <th>RUT Usuario</th>
-                        <th>Fecha Solicitud</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="tabla" id="tabla-prestamos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>RUT Usuario</th>
+                            <th>Fecha Inicio</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
 
         <section id="historial" class="vista">
             <div class="vista-header">
                 <h2>Historial de Movimientos</h2>
-                <button class="btn-primary" onclick="cargarHistorial()">Actualizar</button>
+                <button class="btn-icon" onclick="cargarHistorial()" title="Actualizar">
+                    <i class="fa-solid fa-sync"></i>
+                </button>
             </div>
-            <table class="tabla" id="tabla-historial">
-                <thead>
-                    <tr>
-                        <th>ID Detalle</th>
-                        <th>Observación</th>
-                        <th>Fecha</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="tabla" id="tabla-historial">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Detalle / Observación</th>
+                            <th>Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
 
         <section id="usuarios" class="vista">
             <div class="vista-header">
                 <h2>Gestión de Usuarios</h2>
-                <button class="btn-primary" onclick="abrirModalUsuario()">Nuevo Usuario</button>
+                <button class="btn-primary" onclick="abrirModalUsuario()">
+                    <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
+                </button>
             </div>
-            <table class="tabla" id="tabla-usuarios">
-                <thead>
-                    <tr>
-                        <th>RUT</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="tabla" id="tabla-usuarios">
+                    <thead>
+                        <tr>
+                            <th>RUT</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </section>
     </main>
 
     <div id="modal-crear-producto" class="modal hidden">
         <div class="modal-content modal-wide">
-            <h3>Nuevo Producto</h3>
-            <label>Código interno:</label> <input id="prod-codigo" type="number">
-            <label>Nombre producto:</label> <input id="prod-nombre" type="text">
-            
-            <label>Categoría:</label>
-            <div class="input-row">
-                <select id="prod-cat"></select>
-                <button class="btn-mini" onclick="abrirModal('modal-add-cat')">+</button>
+            <div class="modal-header">
+                <h3>Nuevo Producto</h3>
+                <span class="close-modal" onclick="cerrarModal('modal-crear-producto')">&times;</span>
             </div>
-
-            <label>Marca:</label>
-            <div class="input-row">
-                <select id="prod-marca"></select>
-                <button class="btn-mini" onclick="abrirModal('modal-add-marca')">+</button>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div>
+                        <label>Código Interno</label>
+                        <input id="prod-codigo" type="number" placeholder="Ej: 10001">
+                    </div>
+                    <div>
+                        <label>Nombre Producto</label>
+                        <input id="prod-nombre" type="text" placeholder="Ej: Taladro Percutor">
+                    </div>
+                    <div>
+                        <label>Categoría</label>
+                        <div class="input-group">
+                            <select id="prod-cat"></select>
+                            <button class="btn-mini" onclick="abrirModal('modal-add-cat')">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Marca</label>
+                        <div class="input-group">
+                            <select id="prod-marca"></select>
+                            <button class="btn-mini" onclick="abrirModal('modal-add-marca')">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Stock Inicial</label>
+                        <input id="prod-stock" type="number" min="0" value="0">
+                    </div>
+                    <div>
+                        <label>Ubicación Física</label>
+                        <div class="input-group">
+                            <select id="prod-ubi"></select>
+                            <button class="btn-mini" onclick="abrirModal('modal-add-ubi')">+</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <label>Stock inicial:</label> <input id="prod-stock" type="number" value="0" min="0">
-
-            <label>Ubicación:</label>
-            <div class="input-row">
-                <select id="prod-ubi"></select>
-                <button class="btn-mini" onclick="abrirModal('modal-add-ubi')">+</button>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarProducto()">Guardar</button>
-                <button onclick="cerrarModal('modal-crear-producto')">Cancelar</button>
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-crear-producto')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarProducto()" class="btn-primary">Guardar Producto</button>
             </div>
         </div>
     </div>
 
     <div id="modal-editar-producto" class="modal hidden">
         <div class="modal-content modal-wide">
-            <h3>Editar Producto</h3>
-            <input type="hidden" id="edit-id">
-            <label>Código interno:</label> <input id="edit-codigo" type="text" disabled>
-            <label>Nombre producto:</label> <input id="edit-nombre" type="text">
-            <label>Categoría:</label> <select id="edit-cat"></select>
-            <label>Marca:</label> <select id="edit-marca"></select>
-            <label>Ubicación:</label> <select id="edit-ubi"></select>
-            <label>Stock actual:</label> <input id="edit-stock" type="number" min="0">
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
-                <button onclick="cerrarModal('modal-editar-producto')">Cancelar</button>
+            <div class="modal-header">
+                <h3>Editar Producto</h3>
+                <span class="close-modal" onclick="cerrarModal('modal-editar-producto')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+                <div class="form-grid">
+                    <div>
+                        <label>Código Interno</label>
+                        <input id="edit-codigo" type="text" disabled class="input-disabled">
+                    </div>
+                    <div>
+                        <label>Nombre Producto</label>
+                        <input id="edit-nombre" type="text">
+                    </div>
+                    <div>
+                        <label>Categoría</label>
+                        <select id="edit-cat"></select>
+                    </div>
+                    <div>
+                        <label>Marca</label>
+                        <select id="edit-marca"></select>
+                    </div>
+                    <div>
+                        <label>Stock Actual</label>
+                        <input id="edit-stock" type="number" min="0">
+                    </div>
+                    <div>
+                        <label>Ubicación</label>
+                        <select id="edit-ubi"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-editar-producto')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarEdicion()" class="btn-primary">Guardar Cambios</button>
             </div>
         </div>
     </div>
 
     <div id="modal-barcode" class="modal hidden">
-        <div class="modal-content" style="text-align: center;">
+        <div class="modal-content text-center">
             <h3>Código de Barras</h3>
-            <div id="barcode-container" style="margin: 20px 0;">
+            <div id="barcode-container" class="barcode-box">
                 </div>
-            <p id="barcode-text" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 20px;"></p>
-            <div class="modal-actions" style="justify-content: center;">
-                <button class="btn-primary" onclick="imprimirBarcode()">Imprimir</button>
-                <button onclick="cerrarModal('modal-barcode')">Cerrar</button>
+            <p id="barcode-text" class="barcode-text"></p>
+            <div class="modal-footer center">
+                <button onclick="imprimirBarcode()" class="btn-primary"><i class="fa-solid fa-print"></i> Imprimir</button>
+                <button onclick="cerrarModal('modal-barcode')" class="btn-secondary">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-add-cat" class="modal hidden">
+    <div id="modal-add-cat" class="modal hidden" style="z-index: 1050;">
         <div class="modal-content">
             <h3>Nueva Categoría</h3>
-            <input id="new-cat-name" type="text" placeholder="Nombre">
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarCategoria()">Guardar</button>
-                <button onclick="cerrarModal('modal-add-cat')">Cancelar</button>
+            <input id="new-cat-name" type="text" placeholder="Nombre de la categoría">
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-add-cat')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarCategoria()" class="btn-primary">Guardar</button>
             </div>
         </div>
     </div>
-    <div id="modal-add-marca" class="modal hidden">
+
+    <div id="modal-add-marca" class="modal hidden" style="z-index: 1050;">
         <div class="modal-content">
             <h3>Nueva Marca</h3>
-            <input id="new-marca-name" type="text" placeholder="Nombre">
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarMarca()">Guardar</button>
-                <button onclick="cerrarModal('modal-add-marca')">Cancelar</button>
+            <input id="new-marca-name" type="text" placeholder="Nombre de la marca">
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-add-marca')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarMarca()" class="btn-primary">Guardar</button>
             </div>
         </div>
     </div>
-    <div id="modal-add-ubi" class="modal hidden">
+
+    <div id="modal-add-ubi" class="modal hidden" style="z-index: 1050;">
         <div class="modal-content">
             <h3>Nueva Ubicación</h3>
-            <input id="new-ubi-sala" type="text" placeholder="Sala">
-            <input id="new-ubi-estante" type="text" placeholder="Estante">
+            <input id="new-ubi-sala" type="text" placeholder="Sala (Ej: Pañol Central)">
+            <input id="new-ubi-estante" type="text" placeholder="Estante (Ej: A-1)">
             <input id="new-ubi-nivel" type="number" placeholder="Nivel">
-            <input id="new-ubi-desc" type="text" placeholder="Descripción">
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarUbicacion()">Guardar</button>
-                <button onclick="cerrarModal('modal-add-ubi')">Cancelar</button>
+            <input id="new-ubi-desc" type="text" placeholder="Descripción adicional">
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-add-ubi')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarUbicacion()" class="btn-primary">Guardar</button>
             </div>
         </div>
     </div>
+
     <div id="modal-crear-usuario" class="modal hidden">
         <div class="modal-content modal-wide">
-            <h3>Nuevo Usuario</h3>
-            <label>RUT:</label> <input id="user-rut" type="number">
-            <label>DV:</label> <input id="user-dv" type="text" maxlength="1" style="width: 50px;">
-            <label>Nombre:</label> <input id="user-pnombre" type="text">
-            <label>Apellido:</label> <input id="user-apPaterno" type="text">
-            <label>Email:</label> <input id="user-email" type="email">
-            <label>Rol:</label> 
-            <select id="user-rol">
-                <option value="1">Administrador</option>
-                <option value="2">Pañolero</option>
-                <option value="3">Docente</option>
-                <option value="4">Alumno</option>
-            </select>
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="guardarUsuario()">Crear</button>
-                <button onclick="cerrarModal('modal-crear-usuario')">Cancelar</button>
+            <div class="modal-header">
+                <h3>Registrar Usuario</h3>
+                <span class="close-modal" onclick="cerrarModal('modal-crear-usuario')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div>
+                        <label>RUT (Sin puntos ni guión)</label>
+                        <input id="user-rut" type="number" placeholder="Ej: 11111111">
+                    </div>
+                    <div>
+                        <label>DV</label>
+                        <input id="user-dv" type="text" maxlength="1" class="input-short">
+                    </div>
+                    <div>
+                        <label>Nombre</label>
+                        <input id="user-pnombre" type="text">
+                    </div>
+                    <div>
+                        <label>Apellido Paterno</label>
+                        <input id="user-apPaterno" type="text">
+                    </div>
+                    <div class="full-width">
+                        <label>Email Institucional</label>
+                        <input id="user-email" type="email">
+                    </div>
+                    <div class="full-width">
+                        <label>Rol</label>
+                        <select id="user-rol">
+                            <option value="1">Administrador</option>
+                            <option value="2">Pañolero</option>
+                            <option value="3">Docente</option>
+                            <option value="4">Alumno</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-crear-usuario')" class="btn-secondary">Cancelar</button>
+                <button onclick="guardarUsuario()" class="btn-primary">Crear Usuario</button>
             </div>
         </div>
     </div>
+
     <div id="modal-nuevo-prestamo" class="modal hidden">
         <div class="modal-content modal-wide">
-            <h3>Registrar Préstamo</h3>
-            <label>RUT Usuario:</label> <input id="prestamo-rut" type="number">
-            <label>Motivo:</label> <input id="prestamo-motivo" type="text">
-            <label>Prioridad:</label>
-            <select id="prestamo-prioridad">
-                <option value="Baja">Baja</option>
-                <option value="Media" selected>Media</option>
-                <option value="Alta">Alta</option>
-            </select>
-            <hr>
-            <h4>Productos</h4>
-            <div class="input-row">
-                <select id="prestamo-prod-select" style="flex:2"></select>
-                <input id="prestamo-prod-cant" type="number" value="1" min="1" style="width:60px">
-                <button class="btn-primary" onclick="agregarProductoALista()">+</button>
+            <div class="modal-header">
+                <h3>Registrar Nuevo Préstamo</h3>
+                <span class="close-modal" onclick="cerrarModal('modal-nuevo-prestamo')">&times;</span>
             </div>
-            <div id="lista-productos-prestamo" class="product-list-container"></div>
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="confirmarPrestamo()">Registrar</button>
-                <button onclick="cerrarModal('modal-nuevo-prestamo')">Cancelar</button>
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div>
+                        <label>RUT Solicitante</label>
+                        <input id="prestamo-rut" type="number" placeholder="Sin puntos ni guión">
+                    </div>
+                    <div>
+                        <label>Prioridad</label>
+                        <select id="prestamo-prioridad">
+                            <option value="Baja">Baja</option>
+                            <option value="Media" selected>Media</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div class="full-width">
+                        <label>Motivo del Préstamo</label>
+                        <input id="prestamo-motivo" type="text" placeholder="Ej: Clase de Redes">
+                    </div>
+                </div>
+                
+                <hr class="divider">
+                
+                <h4><i class="fa-solid fa-cart-plus"></i> Agregar Productos</h4>
+                <div class="input-group mb-10">
+                    <select id="prestamo-prod-select" class="flex-grow"></select>
+                    <input id="prestamo-prod-cant" type="number" value="1" min="1" style="width: 80px;">
+                    <button class="btn-primary" onclick="agregarProductoALista()">Agregar</button>
+                </div>
+                
+                <div id="lista-productos-prestamo" class="product-list-container">
+                    <p class="text-muted text-center">No hay productos agregados</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="cerrarModal('modal-nuevo-prestamo')" class="btn-secondary">Cancelar</button>
+                <button onclick="confirmarPrestamo()" class="btn-success">Registrar Préstamo</button>
             </div>
         </div>
     </div>
