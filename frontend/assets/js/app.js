@@ -8,8 +8,9 @@ const API_USUARIOS    = 'http://localhost:8084/api/usuarios';
 const API_HISTORIAL   = 'http://localhost:8085/api/historial';
 const API_BARCODE     = 'http://localhost:8086/api/barcodes';
 
-// Estado local temporal
+// Estado local
 let productosPrestamoTemp = [];
+let solicitudesCache = []; // Caché para no volver a pedir al server al abrir modal
 
 // ==========================================
 // INICIALIZACIÓN
@@ -22,16 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
 document.querySelectorAll('.navbar li').forEach(item => {
     item.addEventListener('click', () => {
         const vista = item.getAttribute('data-vista');
-
-        // Activar pestaña
         document.querySelectorAll('.navbar li').forEach(li => li.classList.remove('active'));
         item.classList.add('active');
-
-        // Mostrar vista
         document.querySelectorAll('.vista').forEach(sec => sec.classList.remove('visible'));
         document.getElementById(vista).classList.add('visible');
 
-        // Cargar datos según la vista
         if (vista === 'inicio') cargarDashboard();
         if (vista === 'inventario') cargarInventario();
         if (vista === 'solicitudes') cargarSolicitudes();
@@ -41,7 +37,6 @@ document.querySelectorAll('.navbar li').forEach(item => {
     });
 });
 
-// Botón flotante inicial
 const btnNuevo = document.getElementById('btn-nuevo-producto');
 if(btnNuevo) {
     btnNuevo.addEventListener('click', async () => {
@@ -57,17 +52,13 @@ async function cargarDashboard() {
     try {
         const res = await fetch(API_INVENTARIO);
         if(!res.ok) throw new Error("Error fetching inventario");
-        
         const productos = await res.json();
         let totalItems = 0;
-        
-        // CORRECCIÓN: Usamos stock_total o stock (fallback)
         productos.forEach(p => totalItems += (p.stock_total || p.stock || 0));
         
         document.getElementById('kpi-total').textContent = totalItems;
-        document.getElementById('kpi-disponibles').textContent = totalItems; // Ajustar lógica si tienes disponibles vs totales
+        document.getElementById('kpi-disponibles').textContent = totalItems; 
         
-        // Para prestados
         try {
             const resPrest = await fetch(API_PRESTAMOS);
             const dataPrest = await resPrest.json();
@@ -77,9 +68,7 @@ async function cargarDashboard() {
         } catch(e) {
             document.getElementById('kpi-prestados').textContent = "-";
         }
-
     } catch (error) { 
-        console.error("Error dashboard", error); 
         document.getElementById('kpi-total').textContent = "Err";
     }
 }
@@ -95,7 +84,6 @@ async function cargarInventario() {
         const res = await fetch(API_INVENTARIO);
         if(!res.ok) throw new Error("Error en API Inventario");
         const data = await res.json();
-
         tbody.innerHTML = '';
         if(data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay productos registrados.</td></tr>';
@@ -103,18 +91,7 @@ async function cargarInventario() {
         }
 
         data.forEach(item => {
-            // Manejo de ubicación flexible
-            let ubiTexto = 'Sin asignar';
-            if (item.ubicacion) {
-                if (typeof item.ubicacion === 'string') ubiTexto = item.ubicacion;
-                else if (typeof item.ubicacion === 'object') {
-                    const sala = item.ubicacion.nombreSala || item.ubicacion.nombre_sala || 'Sala ?';
-                    const est = item.ubicacion.estante ? ` - ${item.ubicacion.estante}` : '';
-                    ubiTexto = sala + est;
-                }
-            }
-
-            // CORRECCIÓN PRINCIPAL: Leer 'stock_total' en lugar de 'stock'
+            let ubiTexto = obtenerTextoUbicacion(item.ubicacion);
             const stockMostrar = item.stock_total !== undefined ? item.stock_total : (item.stock || 0);
 
             const tr = document.createElement('tr');
@@ -135,17 +112,23 @@ async function cargarInventario() {
         });
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:red">Error de conexión (Puerto 8081)</td></tr>';
-        console.error(err);
     }
 }
 
-// === CÓDIGO DE BARRAS ===
+function obtenerTextoUbicacion(ubicacion) {
+    if (!ubicacion) return 'Sin asignar';
+    if (typeof ubicacion === 'string') return ubicacion;
+    if (typeof ubicacion === 'object') {
+        const sala = ubicacion.nombreSala || ubicacion.nombre_sala || 'Sala ?';
+        const est = ubicacion.estante ? ` - ${ubicacion.estante}` : '';
+        return sala + est;
+    }
+    return 'Desconocida';
+}
+
 function verCodigoBarras(codigo) {
     if(!codigo) return alert("Código inválido");
-    
-    // Agregamos timestamp para evitar caché
     const urlImagen = `${API_BARCODE}/${codigo}?t=${new Date().getTime()}`; 
-    
     const container = document.getElementById('barcode-container');
     container.innerHTML = `<img src="${urlImagen}" alt="Barcode" style="max-height: 100px;">`;
     document.getElementById('barcode-text').textContent = codigo;
@@ -160,14 +143,11 @@ function imprimirBarcode() {
     win.document.write('<h3>Duoc UC - Pañol</h3>');
     win.document.write(contenido);
     win.document.write(`<h1>${texto}</h1>`);
-    win.document.write('</body></html>');
     win.document.close();
     win.print();
 }
 
-// === ABM PRODUCTOS ===
 async function guardarProducto() {
-    // Para CREAR, el DTO espera "cantidad"
     const data = {
         cod_interno: parseInt(document.getElementById('prod-codigo').value),
         nombre_producto: document.getElementById('prod-nombre').value,
@@ -183,7 +163,6 @@ async function guardarProducto() {
         alert("Producto creado correctamente");
         cerrarModal('modal-crear-producto');
         cargarInventario();
-        // Limpiar inputs
         document.getElementById('prod-codigo').value = '';
         document.getElementById('prod-nombre').value = '';
         document.getElementById('prod-stock').value = '0';
@@ -192,8 +171,6 @@ async function guardarProducto() {
 
 async function prepararEdicion(id) {
     await cargarCombosProducto('edit-cat', 'edit-marca', 'edit-ubi');
-    
-    // Traemos el producto
     const res = await fetch(`${API_INVENTARIO}/${id}`);
     const data = await res.json();
 
@@ -201,13 +178,11 @@ async function prepararEdicion(id) {
     document.getElementById('edit-codigo').value = data.cod_interno || data.codigo;
     document.getElementById('edit-nombre').value = data.nombre_producto || data.nombre;
     
-    // CORRECCIÓN: Al editar, leemos stock_total para mostrarlo en el input
     const stockVal = data.stock_total !== undefined ? data.stock_total : data.stock;
     document.getElementById('edit-stock').value = stockVal;
     
-    // Seleccionar valores en los combos
     if(data.categoria_id) document.getElementById('edit-cat').value = data.categoria_id;
-    else if(data.categoria) document.getElementById('edit-cat').value = data.categoria; // Fallback si viene el objeto o id directo
+    else if(data.categoria) document.getElementById('edit-cat').value = data.categoria;
 
     if(data.marca_id) document.getElementById('edit-marca').value = data.marca_id;
     else if(data.marca) document.getElementById('edit-marca').value = data.marca;
@@ -220,8 +195,6 @@ async function prepararEdicion(id) {
 
 async function guardarEdicion() {
     const id = document.getElementById('edit-id').value;
-    
-    // Para EDITAR, el DTO espera "stock" (según ProductoEditRequestDTO)
     const data = {
         nombre_producto: document.getElementById('edit-nombre').value,
         categoria: parseInt(document.getElementById('edit-cat').value),
@@ -243,7 +216,6 @@ async function eliminarProducto(id) {
     }
 }
 
-// === COMBOS ===
 async function cargarCombosProducto(idCat, idMarca, idUbi) {
     try {
         const [resCat, resMarca, resUbi] = await Promise.all([
@@ -259,7 +231,6 @@ async function cargarCombosProducto(idCat, idMarca, idUbi) {
         llenarSelect(idCat, cats, 'id', 'nombre');
         llenarSelect(idMarca, marcas, 'id', 'nombre');
         
-        // Lógica especial para ubicación
         const selectUbi = document.getElementById(idUbi);
         selectUbi.innerHTML = '<option value="">Seleccione...</option>';
         ubis.forEach(u => {
@@ -274,7 +245,6 @@ async function cargarCombosProducto(idCat, idMarca, idUbi) {
     } catch (e) { console.error("Error cargando combos", e); }
 }
 
-// Auxiliares de creación rápida
 async function guardarCategoria() {
     const nombre = document.getElementById('new-cat-name').value;
     await fetchSimple(`${API_INVENTARIO}/detalles/categorias`, 'POST', {nombre}, () => {
@@ -311,25 +281,29 @@ async function cargarSolicitudes() {
     try {
         const res = await fetch(API_SOLICITUDES);
         const data = await res.json();
-        const lista = data._embedded ? data._embedded.solicitudResponseDTOList : (Array.isArray(data) ? data : []);
+        solicitudesCache = data._embedded ? data._embedded.solicitudResponseDTOList : (Array.isArray(data) ? data : []);
         
         tbody.innerHTML = '';
-        if(lista.length === 0) {
+        // Filtrar solo las pendientes
+        const pendientes = solicitudesCache.filter(s => s.estado === 'pendiente');
+
+        if(pendientes.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay solicitudes pendientes.</td></tr>';
             return;
         }
 
-        lista.forEach(s => {
+        pendientes.forEach(s => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${s.id}</td>
                 <td>${s.rut}</td>
                 <td>${s.motivo}</td>
                 <td><span class="badge ${s.prioridad === 'Alta' ? 'badge-danger' : 'badge-info'}">${s.prioridad}</span></td>
-                <td>${s.estado || 'Pendiente'}</td>
+                <td>${s.estado}</td>
                 <td>
-                    <button class="btn-mini btn-success" onclick="cambiarEstadoSol(${s.id}, 'APROBADA')">Aprobar</button>
-                    <button class="btn-mini btn-secondary" onclick="cambiarEstadoSol(${s.id}, 'RECHAZADA')">Rechazar</button>
+                    <button class="btn-mini btn-primary" onclick="verDetalleSolicitud(${s.id})">
+                        <i class="fa-solid fa-eye"></i> Ver Detalle
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -337,9 +311,83 @@ async function cargarSolicitudes() {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="6">Error de conexión</td></tr>'; }
 }
 
+// --- NUEVA FUNCIÓN: VER DETALLE Y CRUZAR CON INVENTARIO ---
+async function verDetalleSolicitud(id) {
+    const solicitud = solicitudesCache.find(s => s.id === id);
+    if (!solicitud) return;
+
+    // 1. Llenar cabecera del modal
+    document.getElementById('det-sol-id').textContent = solicitud.id;
+    document.getElementById('det-sol-rut').textContent = solicitud.rut;
+    document.getElementById('det-sol-prio').textContent = solicitud.prioridad;
+    document.getElementById('det-sol-motivo').textContent = solicitud.motivo;
+
+    // Configurar botones de acción del modal
+    document.getElementById('btn-aprobar-modal').onclick = () => cambiarEstadoSol(id, 'APROBADA');
+    document.getElementById('btn-rechazar-modal').onclick = () => cambiarEstadoSol(id, 'RECHAZADA');
+
+    // 2. Limpiar tabla y mostrar loading
+    const tbody = document.querySelector('#tabla-detalle-items tbody');
+    tbody.innerHTML = '';
+    document.getElementById('detalle-loading').classList.remove('hidden');
+    abrirModal('modal-detalle-solicitud');
+
+    // 3. Obtener detalles de productos (Composition)
+    try {
+        // Creamos una lista de promesas para buscar info de cada producto en API INVENTARIO
+        const promesas = solicitud.detalles.map(async (detalle) => {
+            try {
+                const respProd = await fetch(`${API_INVENTARIO}/${detalle.idProducto}`);
+                if (!respProd.ok) throw new Error();
+                const prodData = await respProd.json();
+                return { ...detalle, prodInfo: prodData };
+            } catch (e) {
+                return { ...detalle, prodInfo: null }; // Si falla, mostramos fallback
+            }
+        });
+
+        const detallesCompletos = await Promise.all(promesas);
+
+        // 4. Renderizar tabla
+        detallesCompletos.forEach(d => {
+            const prod = d.prodInfo;
+            const nombreProd = prod ? (prod.nombre_producto || prod.nombre) : `ID ${d.idProducto} (No encontrado)`;
+            const stockActual = prod ? (prod.stock_total !== undefined ? prod.stock_total : prod.stock) : '?';
+            const ubicacion = prod ? obtenerTextoUbicacion(prod.ubicacion) : '-';
+            
+            // Alerta visual si stock insuficiente
+            const alertaStock = (typeof stockActual === 'number' && stockActual < d.cantidad) 
+                                ? '<span style="color:red; font-weight:bold"><i class="fa-solid fa-triangle-exclamation"></i> Insuficiente</span>' 
+                                : '<span style="color:green">OK</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <b>${nombreProd}</b><br>
+                    <small class="text-muted">ID: ${d.idProducto}</small>
+                </td>
+                <td>${ubicacion}</td>
+                <td class="text-center font-bold">${d.cantidad}</td>
+                <td class="text-center">${stockActual} (${alertaStock})</td>
+                <td><small>Desde: ${d.fechaInicio}<br>Hasta: ${d.fechaRetorno}</small></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5">Error cargando detalles del inventario.</td></tr>';
+    } finally {
+        document.getElementById('detalle-loading').classList.add('hidden');
+    }
+}
+
 async function cambiarEstadoSol(id, estado) {
-    if(!confirm(`¿Marcar como ${estado}?`)) return;
-    await fetchSimple(`${API_SOLICITUDES}/${id}/estado`, 'PUT', {estado}, cargarSolicitudes);
+    if(!confirm(`¿Confirma marcar la solicitud como ${estado}?`)) return;
+    await fetchSimple(`${API_SOLICITUDES}/${id}/estado`, 'PUT', {estado}, () => {
+        cerrarModal('modal-detalle-solicitud');
+        cargarSolicitudes(); // Recargar tabla principal
+        alert(`Solicitud ${estado} correctamente.`);
+    });
 }
 
 // ==========================================
@@ -375,7 +423,6 @@ async function cargarPrestamos() {
 async function abrirModalPrestamo() {
     productosPrestamoTemp = [];
     actualizarListaProductosModal();
-    // Cargar productos en el select
     const res = await fetch(API_INVENTARIO);
     const prods = await res.json();
     llenarSelect('prestamo-prod-select', prods, 'id', 'nombre_producto'); 

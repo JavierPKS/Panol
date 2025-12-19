@@ -273,11 +273,50 @@
         </div>
     </div>
 
+    <div id="modal-detalle-solicitud" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h3>Detalle de Solicitud #<span id="det-sol-id"></span></h3>
+                <span class="close-modal" onclick="cerrarModal('modal-detalle-solicitud')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="info-box">
+                    <p><strong>Solicitante (RUT):</strong> <span id="det-sol-rut"></span></p>
+                    <p><strong>Prioridad:</strong> <span id="det-sol-prio"></span></p>
+                    <p><strong>Motivo:</strong> <span id="det-sol-motivo"></span></p>
+                </div>
+                
+                <h4>Productos Solicitados</h4>
+                <div class="table-responsive">
+                    <table class="tabla" id="tabla-detalle-items">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Ubicación</th>
+                                <th>Cant. Solicitada</th>
+                                <th>Stock Actual</th>
+                                <th>Fechas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <div id="detalle-loading" class="text-center hidden">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Verificando disponibilidad...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-rechazar-modal" class="btn-secondary btn-danger-outline">Rechazar</button>
+                <button id="btn-aprobar-modal" class="btn-primary btn-success">Aprobar Solicitud</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-barcode" class="modal hidden">
         <div class="modal-content text-center">
             <h3>Código de Barras</h3>
-            <div id="barcode-container" class="barcode-box">
-                </div>
+            <div id="barcode-container" class="barcode-box"></div>
             <p id="barcode-text" class="barcode-text"></p>
             <div class="modal-footer center">
                 <button onclick="imprimirBarcode()" class="btn-primary"><i class="fa-solid fa-print"></i> Imprimir</button>
