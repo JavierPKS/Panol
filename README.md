@@ -47,16 +47,27 @@ Basado en el **Acta de Constitución**, este proyecto surge de la necesidad de o
 
 El sistema utiliza una arquitectura de **microservicios** para el backend y una aplicación web ligera para el frontend.
 
-### Backend (Java / Spring Boot)
-- **Lenguaje:** Java 17  
-- **Framework:** Spring Boot 3.x  
-- **Gestión de dependencias:** Maven  
-- **Persistencia:** JPA / Hibernate  
-- **Base de datos:** MySQL  
+<details>
+<summary>🖥️ <b>Frontend (Interfaz Web)</b></summary>
 
-### Frontend (Web)
-- **Tecnologías:** HTML5, CSS3, JavaScript (Vanilla ES6)
-- **Estilos:** CSS personalizado (Variables CSS)
+- **HTML5 & CSS3**: Estructura semántica y diseño responsivo con Flexbox/Grid.
+- **JavaScript (Vanilla ES6)**: Lógica del cliente sin dependencias de frameworks pesados.
+- **Fetch API**: Consumo asíncrono de los microservicios REST.
+- **Variables CSS**: Para una gestión de temas y estilos consistente.
+
+</details>
+
+<details>
+<summary>☕ <b>Backend (Microservicios Spring Boot)</b></summary>
+
+- **Java 17**: Lenguaje base robusto y tipado.
+- **Spring Boot 3.x**: Framework para creación rápida de microservicios.
+- **Spring Data JPA**: Abstracción para la persistencia de datos.
+- **Hibernate**: ORM para mapeo de base de datos.
+- **MySQL**: Motor de base de datos relacional.
+- **Maven**: Gestión de dependencias y ciclo de vida del proyecto.
+
+</details>
 
 ---
 
@@ -92,27 +103,30 @@ El sistema utiliza una arquitectura de **microservicios** para el backend y una 
 ---
 
 ## 🔧 Instalación y Configuración
+1. Base de Datos
+SQL
 
-### 1. Base de Datos
-
-1. Crear una base de datos MySQL llamada `bdpanol`.
-2. Ejecutar el script `BaseDeDatos.sql` ubicado en la raíz del proyecto.
-
-```sql
+-- Ejecutar en tu cliente MySQL favorito
 CREATE DATABASE bdpanol;
 USE bdpanol;
--- Copiar y ejecutar el contenido de BaseDeDatos.sql aquí
+-- (Cargar contenido de BaseDeDatos.sql)
 
-```
+2. Backend (Microservicios)
+Es necesario levantar cada servicio en su propia terminal:
 
-### 2. Backend (Microservicios)
+Bash
 
-Cada microservicio es una aplicación Spring Boot independiente.
-
-1. **Ejecutar microservicios:** Navegar a la carpeta de cada servicio y ejecutar:
-```bash
+# Ejemplo para Inventario
+cd backend/api-inventario
 ./mvnw spring-boot:run
+Repetir para: api-prestamos, api-solicitudes, api-usuarios, etc.
 
+3. Frontend
+Para evitar bloqueos por CORS, se recomienda usar un servidor local (ej. Live Server en VS Code):
+
+Abrir la carpeta frontend/ en VS Code.
+
+Clic derecho en index.html -> "Open with Live Server".
 ```
 
 
