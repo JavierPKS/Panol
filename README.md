@@ -1,171 +1,192 @@
 # Sistema de Gestión de Pañol - Duoc UC 🛠️📚
 
-Este proyecto consiste en una solución integral para la administración, control y trazabilidad de los recursos, equipos y herramientas de la **Escuela de Informática y Telecomunicaciones del Duoc UC**.
+Sistema web para la administración, control y trazabilidad de los recursos, equipos y herramientas de la  
+**Escuela de Informática y Telecomunicaciones del Duoc UC**.
 
-El sistema moderniza la gestión manual actual, permitiendo un control eficiente del inventario, préstamos, devoluciones y solicitudes mediante una arquitectura de microservicios.
+El sistema moderniza la gestión manual del pañol, permitiendo un control eficiente del inventario, préstamos, devoluciones y solicitudes mediante una arquitectura de microservicios.
+
+---
 
 ## 📋 Tabla de Contenidos
 
-  - [Contexto del Proyecto](https://www.google.com/search?q=%23-contexto-del-proyecto)
-  - [Arquitectura y Tecnologías](https://www.google.com/search?q=%23-arquitectura-y-tecnolog%C3%ADas)
-  - [Estructura del Repositorio](https://www.google.com/search?q=%23-estructura-del-repositorio)
-  - [Pre-requisitos](https://www.google.com/search?q=%23-pre-requisitos)
-  - [Instalación y Configuración](https://www.google.com/search?q=%23-instalaci%C3%B3n-y-configuraci%C3%B3n)
-      - [1. Base de Datos](https://www.google.com/search?q=%231-base-de-datos)
-      - [2. Backend (Microservicios)](https://www.google.com/search?q=%232-backend-microservicios)
-      - [3. Frontend](https://www.google.com/search?q=%233-frontend)
-  - [Funcionalidades Principales](https://www.google.com/search?q=%23-funcionalidades-principales)
-  - [Equipo](https://www.google.com/search?q=%23-equipo)
+- [Contexto del Proyecto](#-contexto-del-proyecto)
+- [Arquitectura y Tecnologías](#-arquitectura-y-tecnologías)
+- [Estructura del Repositorio](#-estructura-del-repositorio)
+- [Pre-requisitos](#️-pre-requisitos)
+- [Instalación y Configuración](#-instalación-y-configuración)
+  - [1. Base de Datos](#1-base-de-datos)
+  - [2. Backend (Microservicios)](#2-backend-microservicios)
+  - [3. Frontend](#3-frontend)
+- [Funcionalidades Principales](#-funcionalidades-principales)
+- [Estado del Proyecto](#-estado-del-proyecto)
+- [Equipo](#-equipo)
 
------
+---
 
 ## 📄 Contexto del Proyecto
 
-Basado en el **Acta de Constitución**, este proyecto nace de la necesidad de optimizar los tiempos y reducir las pérdidas de material en el pañol.
+Basado en el **Acta de Constitución**, este proyecto surge de la necesidad de optimizar los tiempos de atención y reducir la pérdida de material en el pañol.
 
-  * **Propósito:** Desarrollar un sistema informático que gestione la trazabilidad de préstamos y el control de stock.
-  * **Usuarios:** Pañoleros (Administradores), Docentes y Alumnos (Solicitantes).
-  * **Alcance:** Gestión de inventario, solicitudes vía web/tótem, validación de préstamos y reportes históricos.
+**Propósito**
+- Desarrollar un sistema informático que gestione la trazabilidad de préstamos y el control de stock.
 
------
+**Usuarios**
+- Pañoleros (Administradores)
+- Docentes
+- Alumnos (Solicitantes)
+
+**Alcance**
+- Gestión de inventario
+- Solicitudes de materiales vía web
+- Validación de préstamos y devoluciones
+- Visualización de historial de movimientos
+
+---
 
 ## 🚀 Arquitectura y Tecnologías
 
-El sistema utiliza una arquitectura de **Microservicios** para el backend y una aplicación web ligera para el frontend.
+El sistema utiliza una arquitectura de **microservicios** para el backend y una aplicación web ligera para el frontend.
 
 ### Backend (Java / Spring Boot)
-
-  * **Lenguaje:** Java 17
-  * **Framework:** Spring Boot 3.x
-  * **Gestión de Dependencias:** Maven
-  * **Persistencia:** JPA / Hibernate
-  * **Base de Datos:** MySQL
+- **Lenguaje:** Java 17  
+- **Framework:** Spring Boot 3.x  
+- **Gestión de dependencias:** Maven  
+- **Persistencia:** JPA / Hibernate  
+- **Base de datos:** MySQL  
 
 ### Frontend (Web)
+- **Tecnologías:** HTML5, CSS3, JavaScript (Vanilla ES6)
+- **Estilos:** CSS personalizado (Variables CSS)
 
-  * **Tecnologías:** HTML5, CSS3, JavaScript (Vanilla ES6)
-  * **Estilos:** CSS personalizado (Variables CSS, Flexbox)
-
------
+---
 
 ## 📂 Estructura del Repositorio
 
-El proyecto se divide en las siguientes carpetas principales:
-
 ```text
 /
-├── BaseDeDatos.sql          # Script de creación de tablas y relaciones
-├── backend/                 # Código fuente de los microservicios
-│   ├── api-historial/       # Servicio de logs e historial (Puerto 8085)
-│   ├── api-inventario/      # Gestión de productos y stock
-│   ├── api-prestamos/       # Lógica de prestar y devolver (Puerto 8082)
-│   ├── api-solicitudes/     # Gestión de solicitudes de alumnos (Puerto 8083)
-│   └── api-usuarios/        # Gestión de usuarios y roles
-└── frontend/                # Interfaz de usuario web
+├── BaseDeDatos.sql               # Script de creación de tablas y relaciones
+├── backend/                      # Código fuente de los microservicios
+│   ├── api-historial/            # Auditoría e historial (Puerto 8085)
+│   ├── api-inventario/           # Gestión de productos y stock (Puerto 8081)
+│   ├── api-prestamos/            # Préstamos y devoluciones (Puerto 8082)
+│   ├── api-solicitudes/          # Solicitudes de materiales (Puerto 8083)
+│   ├── api-usuarios/             # Gestión de usuarios y roles (Puerto 8084)
+│   └── api-codigos-barras/       # Lectura y gestión de códigos de barras (Puerto 8086)
+└── frontend/                     # Interfaz de usuario web
     ├── assets/
-    │   ├── css/             # Hoja de estilos (styles.css)
-    │   └── js/              # Lógica del cliente (app.js)
-    └── index.html           # Vista principal (SPA simple)
+    │   ├── css/                  # Hojas de estilo
+    │   └── js/                   # Lógica del cliente
+    └── index.html                # Vista principal
+
 ```
 
------
+---
 
 ## ⚙️ Pre-requisitos
 
-  * **Java JDK 17** o superior.
-  * **XAMPP MySQL Server** (corriendo en el puerto 3306).
-  * **Navegador Web** moderno.
-  * (Opcional) **Maven** instalado (o usar el wrapper `mvnw` incluido).
+* **Java JDK 17** o superior.
+* **MySQL Server** (corriendo en el puerto 3306).
+* **Navegador web moderno** (Chrome, Firefox, Edge).
+* (Opcional) **Maven** instalado o uso del wrapper `mvnw` incluido.
 
------
+---
 
 ## 🔧 Instalación y Configuración
 
-### 1\. Base de Datos
+### 1. Base de Datos
 
-1.  Crea una base de datos en MySQL llamada `bdpanol`.
-2.  Ejecuta el script `BaseDeDatos.sql` proporcionado en la raíz del proyecto para generar las tablas (`PRODUCTO`, `STOCK`, `USUARIO`, etc.).
-
-<!-- end list -->
+1. Crear una base de datos MySQL llamada `bdpanol`.
+2. Ejecutar el script `BaseDeDatos.sql` ubicado en la raíz del proyecto.
 
 ```sql
 CREATE DATABASE bdpanol;
 USE bdpanol;
--- Copiar y pegar contenido de BaseDeDatos.sql
+-- Copiar y ejecutar el contenido de BaseDeDatos.sql aquí
+
 ```
 
-### 2\. Backend (Microservicios)
+### 2. Backend (Microservicios)
 
-Cada microservicio es una aplicación Spring Boot independiente. Debes configurar las credenciales de base de datos en el archivo `application.properties` de cada API si tu usuario no es `root` o tienes contraseña.
+Cada microservicio es una aplicación Spring Boot independiente.
 
-**Ubicación de config:** `backend/api-{nombre}/src/main/resources/application.properties`
-
-Ejemplo de configuración:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/bdpanol?useSSL=false&...
-spring.datasource.username=root
-spring.datasource.password=TU_CONTRASEÑA
-```
-
-**Ejecución:**
-Abre una terminal en la carpeta de cada microservicio y ejecuta:
-
+1. **Ejecutar microservicios:** Navegar a la carpeta de cada servicio y ejecutar:
 ```bash
 ./mvnw spring-boot:run
+
 ```
 
-*Nota: Asegúrate de levantar los servicios necesarios (Inventario, Préstamos, Solicitudes, etc.).*
 
-| Servicio | Puerto Configurado |
-| :--- | :--- |
-| API Inventario | 8081 |
-| API Préstamos | 8082 |
-| API Solicitudes | 8083 |
-| API Usuarios | 8084 |
-| API Historial | 8085 |
 
-### 3\. Frontend
+#### Puertos Configurados
 
-1.  Navega a la carpeta `frontend/`.
-2.  Abre el archivo `assets/js/app.js`.
-3.  Verifica la constante `API_BASE_URL`.
-      * *Nota:* Actualmente apunta a `localhost:3000`. Si no estás usando un API Gateway, deberás apuntar directamente a los puertos de los microservicios según la funcionalidad que estés probando o configurar un proxy.
-4.  Abre `index.html` en tu navegador.
+| Servicio | Puerto | Descripción |
+| --- | --- | --- |
+| **API Inventario** | `8081` | Productos y Stock |
+| **API Préstamos** | `8082` | Flujo de préstamos |
+| **API Solicitudes** | `8083` | Peticiones de alumnos |
+| **API Usuarios** | `8084` | Login y Roles |
+| **API Historial** | `8085` | Logs y Auditoría |
+| **API Cód. Barras** | `8086` | Lectura de equipos |
 
------
+### 2. Frontend
+
+1. Ir a la carpeta `frontend/`.
+2. Abrir `assets/js/app.js` y verificar que las URLs de las APIs apunten a `localhost` y los puertos correctos.
+3. Ejecutar la web.
+
+> **⚠️ Importante:** Para evitar errores de **CORS**, se recomienda no abrir el archivo `index.html` directamente con doble clic. Utiliza una extensión como **Live Server** en VS Code o levanta un servidor local simple.
+
+---
 
 ## ✨ Funcionalidades Principales
 
-1.  **Gestión de Inventario:**
+### 📦 Gestión de Inventario
 
-      * Alta, baja y modificación de productos.
-      * Clasificación por Categoría, Marca y Ubicación física (Pasillo/Estante).
-      * Visualización de stock total, disponible y prestado.
+* Alta, baja y modificación de productos.
+* Clasificación por categoría, marca y ubicación física.
+* Control de stock total, disponible y prestado.
 
-2.  **Solicitudes y Préstamos:**
+### 📝 Solicitudes y Préstamos
 
-      * Creación de solicitudes de material por parte de alumnos/docentes.
-      * Validación de disponibilidad de stock.
-      * Registro de fecha de inicio y retorno esperado.
+* Creación de solicitudes por alumnos y docentes.
+* Validación de disponibilidad en tiempo real.
+* Registro automático de fechas de préstamo y devolución.
 
-3.  **Devoluciones:**
+### 🔄 Devoluciones
 
-      * Registro de devoluciones que libera automáticamente el stock reservado.
+* Registro de devoluciones con actualización automática de stock.
 
-4.  **Usuarios y Roles:**
+### 🏷️ Códigos de Barras
 
-      * Roles definidos: Jefe de Carrera, Pañolero, Docentes, Alumnos.
+* Asociación de códigos de barras a productos.
+* Búsqueda rápida de productos mediante código (soporte para lector físico o manual).
 
------
+### 👥 Usuarios y Roles
+
+* **Jefe de Carrera:** Supervisión total.
+* **Pañolero:** Gestión operativa.
+* **Docentes/Alumnos:** Solicitud de recursos.
+
+---
+
+## 📌 Estado del Proyecto
+
+* **Tipo:** Proyecto académico.
+* **Estado:** Funcional en entorno local.
+* **Arquitectura:** Microservicios.
+* **Despliegue:** No desplegado en producción.
+
+---
 
 ## 👥 Equipo
 
-Proyecto desarrollado para la **Escuela de Informática y Telecomunicaciones**.
+Proyecto desarrollado para la **Escuela de Informática y Telecomunicaciones – Duoc UC**.
 
-  * **Patrocinador:** Director de Escuela.
-  * **Gerente de Proyecto:** Jefe de Carrera.
-  * **Desarrollo:** Javier Parra / Abigail Maripan.
-  * **QA / Testing:** Equipo de validación.
+* **Patrocinador:** Director de Escuela
+* **Gerente de Proyecto:** Jefe de Carrera
+* **Desarrollo:** Javier Parra / Abigail Maripan
+* **QA / Testing:** Equipo de validación
 
------
+```
+
+```
